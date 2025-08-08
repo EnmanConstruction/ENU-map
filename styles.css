@@ -22,3 +22,66 @@ aside{background:var(--card);border-right:1px solid #1b2648;padding:12px;overflo
 .k.blue{color:var(--oilers-blue)} .k.red{color:var(--flames-red)}
 .toggle{display:flex;align-items:center;gap:8px;margin:6px 0}
 .leaflet-container a{color:#9fb0ce}
+/* --- Mobile tweaks --- */
+.hamburger{
+  display:none;
+  margin-left:auto;
+  background:transparent;
+  color:#e6eefc;
+  border:1px solid #1b2648;
+  border-radius:10px;
+  padding:6px 10px;
+  font-size:18px;
+  cursor:pointer;
+}
+
+/* Make tap targets friendlier on touch */
+.leaflet-interactive { touch-action: manipulation; }
+
+/* Mobile breakpoint */
+@media (max-width: 900px){
+  #app{
+    display:grid;
+    grid-template-columns: 1fr;      /* single column */
+    grid-template-rows: auto 1fr;    /* header then map */
+  }
+  .hamburger{ display:inline-block; }
+
+  /* Off-canvas side panel */
+  #sidepanel{
+    position: fixed;
+    top: 56px; /* ~ header height */
+    left: 0;
+    width: 86vw;
+    height: calc(100vh - 56px);
+    background: var(--card);
+    border-right: 1px solid #1b2648;
+    overflow: auto;
+    transform: translateX(-105%);
+    transition: transform .25s ease;
+    z-index: 1000;
+  }
+  #sidepanel.open{
+    transform: translateX(0);
+  }
+
+  /* Map fills remaining viewport */
+  #map{ height: calc(100vh - 56px); }
+
+  /* KPIs: 2 columns on mobile */
+  .kpi{ grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Dim backdrop behind the drawer */
+.backdrop{
+  position: fixed; inset: 56px 0 0 0;
+  background: rgba(0,0,0,.35);
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease;
+}
+.backdrop.show{
+  opacity: 1;
+  pointer-events: auto;
+}
