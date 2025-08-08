@@ -11,36 +11,37 @@
 </head>
 <body>
   <div id="app">
-    <header>
-      <h1>Edmonton Neighbourhoods United — Citywide Densification & Coverage</h1>
-      <div class="meta">Live mock • ENU presence • Active permits • Ward/Councillor</div>
-    </header>
-    <aside>
-      <div class="panel">
-        <h2>Layers</h2>
-        <label class="toggle"><input id="toggle-heat" type="checkbox" checked /> Densification heatmap</label>
-        <label class="toggle"><input id="toggle-hotspots" type="checkbox" checked /> Infill hotspots (context)</label>
-        <label class="toggle"><input id="toggle-gaps" type="checkbox" checked /> Areas needing local advocates</label>
-      </div>
-      <div class="panel">
-        <h2>Legend</h2>
-        <div class="legend">
-          <div class="row"><span class="swatch hot"></span> High densification</div>
-          <div class="row"><span class="swatch warm"></span> Moderate</div>
-          <div class="row"><span class="swatch cool"></span> Low</div>
-          <div class="row"><span class="swatch enu-yes"></span> ENU presence (Yes)</div>
-          <div class="row"><span class="swatch enu-no"></span> ENU presence (No)</div>
-        </div>
-      </div>
-      <div class="panel">
-        <h2>Citywide snapshot</h2>
-        <div class="kpi">
-          <div class="k"><div class="n" id="k-permits">–</div><div class="l">Dev. permits</div></div>
-          <div class="k blue"><div class="n" id="k-enu-yes">–</div><div class="l">ENU Presence (Yes)</div></div>
-          <div class="k red"><div class="n" id="k-enu-no">–</div><div class="l">ENU Presence (No)</div></div>
-        </div>
-      </div>
-    </aside>
+   <header>
+  <h1>Edmonton Neighbourhoods United — Citywide Densification & Coverage</h1>
+  <div class="meta">Live mock • ENU presence • Active permits • Ward/Councillor</div>
+  <button id="panelToggle" class="hamburger" aria-expanded="false" aria-controls="sidepanel">☰</button>
+</header>
+<aside id="sidepanel">
+  <div class="panel">
+    <h2>Layers</h2>
+    <label class="toggle"><input id="toggle-heat" type="checkbox" checked /> Densification heatmap</label>
+    <label class="toggle"><input id="toggle-hotspots" type="checkbox" checked /> Infill hotspots (context)</label>
+    <label class="toggle"><input id="toggle-gaps" type="checkbox" checked /> Areas needing local advocates</label>
+  </div>
+  <div class="panel">
+    <h2>Legend</h2>
+    <div class="legend">
+      <div class="row"><span class="swatch hot"></span> High densification</div>
+      <div class="row"><span class="swatch warm"></span> Moderate</div>
+      <div class="row"><span class="swatch cool"></span> Low</div>
+      <div class="row"><span class="swatch enu-yes"></span> ENU presence (Yes)</div>
+      <div class="row"><span class="swatch enu-no"></span> ENU presence (No)</div>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>Citywide snapshot</h2>
+    <div class="kpi">
+      <div class="k"><div class="n" id="k-permits">–</div><div class="l">Dev. permits</div></div>
+      <div class="k blue"><div class="n" id="k-enu-yes">–</div><div class="l">ENU Presence (Yes)</div></div>
+      <div class="k red"><div class="n" id="k-enu-no">–</div><div class="l">ENU Presence (No)</div></div>
+    </div>
+  </div>
+</aside>
     <main id="map"></main>
   </div>
 
