@@ -1,7 +1,8 @@
+(function () {
+  // Tear down any previous map on hot-reload
+  if (window.__enuMap) { try { window.__enuMap.remove(); } catch (e) {} window.__enuMap = null; }
 
-(function(){
-  if (window.__enuMap) { try{ window.__enuMap.remove(); }catch(e){} window.__enuMap=null; }
-
+  // --- Data (same as before) ---
   const DATA = [
     { name:"Oliver",      lat:53.544,  lng:-113.516, permits:210, infill:120, enuPresence:true,  ward:"O-day'min", councillor:"TBD" },
     { name:"Downtown",    lat:53.545,  lng:-113.495, permits:260, infill: 80, enuPresence:true,  ward:"O-day'min", councillor:"TBD" },
@@ -17,114 +18,216 @@
     { name:"Laurel",      lat:53.448,  lng:-113.377, permits: 85, infill: 18, enuPresence:false, ward:"(mock)",     councillor:"TBD" }
   ];
 
-  const map = L.map('map', { zoomControl:false, minZoom:9, maxZoom:18 }).setView([53.5444,-113.4909], 11);
-  window.__enuMap = map;
-  L.control.zoom({position:'bottomright'}).addTo(map);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'&copy; OpenStreetMap contributors' }).addTo(map);
+  // --- App state ---
+  const state = { ward: null };
 
+  // --- Helpers ---
+  function uniqueWards(list) {
+    return [...new Set(list.map(d => d.ward))].filter(Boolean);
+  }
+  function fitToWard(ward) {
+    const pts = DATA.filter(d => d.ward === ward).map(d => [d.lat, d.lng]);
+    if (!pts.length || !window.__enuMap) return;
+    const bounds = L.latLngBounds(pts);
+    window.__enuMap.fitBounds(bounds.pad(0.2));
+  }
+  function setDetails(d) {
+    const box = document.getElementById('details');
+    if (!box) return; // if details container not added yet, skip
+    if (!d) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+    box.classList.remove('hidden');
+    box.innerHTML = `
+      <h3>${d.name}</h3>
+      <div style="display:flex; gap:8px; margin-bottom:6px;">
+        <span class="badge ${d.enuPresence ? 'yes' : 'no'}">${d.enuPresence ? 'ENU Presence: Yes' : 'ENU Presence: No'}</span>
+        <span class="badge">Ward: ${d.ward}</span>
+      </div>
+      <div class="row"><span>Active permits</span><strong>${d.permits.toLocaleString()}</strong></div>
+      <div class="row"><span>Infill permits</span><strong>${d.infill.toLocaleString()}</strong></div>
+      <div class="row"><span>Councillor</span><strong>${d.councillor}</strong></div>
+    `;
+  }
+
+  // --- Map init ---
+  const map = L.map('map', { zoomControl: false, minZoom: 9, maxZoom: 19 }).setView([53.5444, -113.4909], 11);
+  window.__enuMap = map;
+  L.control.zoom({ position: 'bottomright' }).addTo(map);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  // --- Layers ---
   const presenceLayer = L.layerGroup().addTo(map);
   const hotspotLayer  = L.layerGroup().addTo(map);
   const gapsLayer     = L.layerGroup().addTo(map);
   let heatLayer = null;
 
-  function colorByInfill(n){ if(n>=140) return '#ef4444'; if(n>=90) return '#f59e0b'; return '#22c55e'; }
-  function scaleIntensity(n){ const max=320; return Math.max(0.1, Math.min(n/max, 1)); }
+  function colorByInfill(n){ if (n >= 140) return '#ef4444'; if (n >= 90) return '#f59e0b'; return '#22c55e'; }
+  function scaleIntensity(n){ const max = 320; return Math.max(0.1, Math.min(n / max, 1)); }
 
-  function render(){
+  // --- Ward chips (if filters bar exists) ---
+  (function buildChips(){
+    const bar = document.getElementById('filters');
+    if (!bar) return; // safe if HTML wasn't added
+    const reset = document.createElement('span');
+    reset.className = 'chip reset active';
+    reset.textContent = 'All wards';
+    reset.addEventListener('click', () => {
+      state.ward = null;
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      reset.classList.add('active');
+      render();
+      setDetails(null);
+    });
+    bar.appendChild(reset);
+
+    uniqueWards(DATA).forEach(w => {
+      const chip = document.createElement('span');
+      chip.className = 'chip';
+      chip.textContent = w;
+      chip.addEventListener('click', () => {
+        state.ward = w;
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        render();
+        fitToWard(w);
+        setDetails(null);
+      });
+      bar.appendChild(chip);
+    });
+  })();
+
+  // --- Render ---
+  function render() {
+    const rows = state.ward ? DATA.filter(d => d.ward === state.ward) : DATA;
+
+    // Presence markers (primary)
     presenceLayer.clearLayers();
-    DATA.forEach(d=>{
-      const m=L.circleMarker([d.lat,d.lng],{
-        radius: d.enuPresence?9:7, weight:2,
-        color: d.enuPresence? '#0038A8':'#CE1126',
-        fillColor: d.enuPresence? '#0038A8':'#CE1126',
-        fillOpacity:.5
-      }).bindPopup(`
+    rows.forEach(d => {
+      const m = L.circleMarker([d.lat, d.lng], {
+        radius: d.enuPresence ? 11 : 10, // slightly bigger for touch
+        weight: 2,
+        color: d.enuPresence ? '#0038A8' : '#CE1126',
+        fillColor: d.enuPresence ? '#0038A8' : '#CE1126',
+        fillOpacity: .5
+      })
+      .bindPopup(`
         <div><strong>${d.name}</strong></div>
-        <div><strong>ENU presence:</strong> ${d.enuPresence?'Yes':'No'}</div>
+        <div><strong>ENU presence:</strong> ${d.enuPresence ? 'Yes' : 'No'}</div>
         <div><strong>Active permits:</strong> ${d.permits.toLocaleString()}</div>
         <div><strong>Ward:</strong> ${d.ward}</div>
         <div><strong>Councillor:</strong> ${d.councillor}</div>
-      `);
+      `)
+      .on('click', () => setDetails(d));
       presenceLayer.addLayer(m);
     });
 
-    const points = DATA.map(d => [d.lat, d.lng, scaleIntensity(d.permits)]);
+    // Heatmap (densification proxy)
+    const points = rows.map(d => [d.lat, d.lng, scaleIntensity(d.permits)]);
     if (heatLayer) map.removeLayer(heatLayer);
-    heatLayer = L.heatLayer(points, { radius:28, blur:18, maxZoom:14, minOpacity:0.2 });
-    if (document.getElementById('toggle-heat').checked) heatLayer.addTo(map);
+    heatLayer = L.heatLayer(points, { radius: 28, blur: 18, maxZoom: 14, minOpacity: 0.2 });
+    if (document.getElementById('toggle-heat')?.checked) heatLayer.addTo(map);
 
+    // Infill hotspots (context)
     hotspotLayer.clearLayers();
-    DATA.filter(d=>d.infill>=90).forEach(d=>{
-      const h=L.circleMarker([d.lat,d.lng],{
-        radius: Math.min(18, 8 + d.infill/15), weight:1.5,
-        color:'#fff', fillColor: colorByInfill(d.infill), fillOpacity:.85
+    rows.filter(d => d.infill >= 90).forEach(d => {
+      const h = L.circleMarker([d.lat, d.lng], {
+        radius: Math.min(18, 8 + d.infill / 15),
+        weight: 1.5,
+        color: '#fff',
+        fillColor: colorByInfill(d.infill),
+        fillOpacity: .85
       }).bindPopup(`
         <div style="display:flex;justify-content:space-between;gap:8px;">
-          <strong>${d.name}</strong><span style="font-size:11px;border:1px solid #1b2648;padding:2px 6px;border-radius:999px;">Infill hotspot</span>
+          <strong>${d.name}</strong>
+          <span style="font-size:11px;border:1px solid #1b2648;padding:2px 6px;border-radius:999px;">Infill hotspot</span>
         </div>
         <div>Infill-type permits: <strong>${d.infill.toLocaleString()}</strong></div>
       `);
       hotspotLayer.addLayer(h);
     });
-    if (!document.getElementById('toggle-hotspots').checked) map.removeLayer(hotspotLayer);
+    if (!document.getElementById('toggle-hotspots')?.checked) map.removeLayer(hotspotLayer);
 
+    // Gaps (moderate activity but no ENU presence)
     gapsLayer.clearLayers();
-    DATA.filter(d => ((d.permits>=90 && d.infill<60) || (!d.enuPresence && d.permits>=80))).forEach(d=>{
-      const g=L.circleMarker([d.lat,d.lng],{
-        radius:10, weight:1.2, dashArray:'4,3', color:'#f59e0b', fillColor:'#f59e0b', fillOpacity:.25
-      }).bindPopup(`
-        <div><strong>${d.name}</strong></div>
-        <div><strong>Needs local advocates</strong></div>
-        <div>Permits: <strong>${d.permits.toLocaleString()}</strong>, Infill: <strong>${d.infill.toLocaleString()}</strong></div>
-      `);
-      gapsLayer.addLayer(g);
-    });
-    if (!document.getElementById('toggle-gaps').checked) map.removeLayer(gapsLayer);
+    rows
+      .filter(d => ((d.permits >= 90 && d.infill < 60) || (!d.enuPresence && d.permits >= 80)))
+      .forEach(d => {
+        const g = L.circleMarker([d.lat, d.lng], {
+          radius: 10,
+          weight: 1.2,
+          dashArray: '4,3',
+          color: '#f59e0b',
+          fillColor: '#f59e0b',
+          fillOpacity: .25
+        }).bindPopup(`
+          <div><strong>${d.name}</strong></div>
+          <div><strong>Needs local advocates</strong></div>
+          <div>Permits: <strong>${d.permits.toLocaleString()}</strong>, Infill: <strong>${d.infill.toLocaleString()}</strong></div>
+        `);
+        gapsLayer.addLayer(g);
+      });
+    if (!document.getElementById('toggle-gaps')?.checked) map.removeLayer(gapsLayer);
 
-    document.getElementById('k-permits').textContent = DATA.reduce((a,b)=>a+b.permits,0).toLocaleString();
-    document.getElementById('k-enu-yes').textContent = DATA.filter(n=>n.enuPresence).length.toLocaleString();
-    document.getElementById('k-enu-no').textContent = DATA.filter(n=>!n.enuPresence).length.toLocaleString();
+    // KPIs (use filtered set)
+    const permits = rows.reduce((a, b) => a + b.permits, 0);
+    const yes = rows.filter(n => n.enuPresence).length;
+    const no  = rows.filter(n => !n.enuPresence).length;
+    const $ = id => document.getElementById(id);
+    if ($('k-permits'))  $('k-permits').textContent  = permits.toLocaleString();
+    if ($('k-enu-yes'))  $('k-enu-yes').textContent  = yes.toLocaleString();
+    if ($('k-enu-no'))   $('k-enu-no').textContent   = no.toLocaleString();
+
+    // Clear details on re-render (e.g., after filter change)
+    setDetails(null);
   }
 
-  ['toggle-heat','toggle-hotspots','toggle-gaps'].forEach(id=>{
-    const el=document.getElementById(id);
-    el.addEventListener('change', render);
+  // Hook layer toggles
+  ['toggle-heat', 'toggle-hotspots', 'toggle-gaps'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', render);
   });
 
+  // First render
   render();
-  try{
+
+  // Sanity self-test (console)
+  try {
     if (!presenceLayer.getLayers().length) throw new Error('Presence layer empty');
-    console.log('ENU map initialized OK — layers & KPIs rendered.');
-  }catch(e){ console.error('Self-test failed:', e); }
+    console.log('ENU map initialized OK — filters, details, layers & KPIs ready.');
+  } catch (e) {
+    console.error('Self-test failed:', e);
+  }
 })();
-// Mobile drawer toggle
-(function(){
+
+// --- Mobile drawer toggle (unchanged) ---
+(function () {
   const side = document.getElementById('sidepanel');
-  const btn = document.getElementById('panelToggle');
+  const btn  = document.getElementById('panelToggle');
 
   // create a backdrop when panel is open
   let backdrop = document.querySelector('.backdrop');
-  if (!backdrop){
+  if (!backdrop) {
     backdrop = document.createElement('div');
     backdrop.className = 'backdrop';
     document.body.appendChild(backdrop);
   }
 
-  function closePanel(){
-    side.classList.remove('open');
-    btn && btn.setAttribute('aria-expanded','false');
+  function closePanel() {
+    side?.classList.remove('open');
+    btn?.setAttribute('aria-expanded', 'false');
     backdrop.classList.remove('show');
-    setTimeout(()=> window.__enuMap && window.__enuMap.invalidateSize(), 200);
+    setTimeout(() => window.__enuMap && window.__enuMap.invalidateSize(), 200);
   }
-  function openPanel(){
-    side.classList.add('open');
-    btn && btn.setAttribute('aria-expanded','true');
+  function openPanel() {
+    side?.classList.add('open');
+    btn?.setAttribute('aria-expanded', 'true');
     backdrop.classList.add('show');
-    setTimeout(()=> window.__enuMap && window.__enuMap.invalidateSize(), 200);
+    setTimeout(() => window.__enuMap && window.__enuMap.invalidateSize(), 200);
   }
 
-  btn && btn.addEventListener('click', ()=>{
-    side.classList.contains('open') ? closePanel() : openPanel();
+  btn && btn.addEventListener('click', () => {
+    side?.classList.contains('open') ? closePanel() : openPanel();
   });
   backdrop.addEventListener('click', closePanel);
 })();
