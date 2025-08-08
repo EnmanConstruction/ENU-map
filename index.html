@@ -15,6 +15,10 @@
   <h1>Edmonton Neighbourhoods United — Citywide Densification & Coverage</h1>
   <div class="meta">Live mock • ENU presence • Active permits • Ward/Councillor</div>
   <button id="panelToggle" class="hamburger" aria-expanded="false" aria-controls="sidepanel">☰</button>
+     <!-- Ward filter chips (auto-filled from data) -->
+<div id="filters" class="filters">
+  <!-- chips will be injected by JS -->
+</div>
 </header>
 <aside id="sidepanel">
   <div class="panel">
@@ -48,5 +52,8 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
   <script src="./app.js"></script>
+  <!-- Details panel (populates on marker click) -->
+<div id="details" class="details hidden" role="region" aria-live="polite"></div>
+
 </body>
 </html>
