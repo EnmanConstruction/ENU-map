@@ -97,3 +97,34 @@
     console.log('ENU map initialized OK — layers & KPIs rendered.');
   }catch(e){ console.error('Self-test failed:', e); }
 })();
+// Mobile drawer toggle
+(function(){
+  const side = document.getElementById('sidepanel');
+  const btn = document.getElementById('panelToggle');
+
+  // create a backdrop when panel is open
+  let backdrop = document.querySelector('.backdrop');
+  if (!backdrop){
+    backdrop = document.createElement('div');
+    backdrop.className = 'backdrop';
+    document.body.appendChild(backdrop);
+  }
+
+  function closePanel(){
+    side.classList.remove('open');
+    btn && btn.setAttribute('aria-expanded','false');
+    backdrop.classList.remove('show');
+    setTimeout(()=> window.__enuMap && window.__enuMap.invalidateSize(), 200);
+  }
+  function openPanel(){
+    side.classList.add('open');
+    btn && btn.setAttribute('aria-expanded','true');
+    backdrop.classList.add('show');
+    setTimeout(()=> window.__enuMap && window.__enuMap.invalidateSize(), 200);
+  }
+
+  btn && btn.addEventListener('click', ()=>{
+    side.classList.contains('open') ? closePanel() : openPanel();
+  });
+  backdrop.addEventListener('click', closePanel);
+})();
