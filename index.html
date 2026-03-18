@@ -334,41 +334,41 @@
 
     <div id="filters" class="filters"></div>
 
-    <aside id="sidepanel">
-      <div class="panel">
-        <h2>Layers</h2>
-        <label class="toggle"><input id="toggle-heat" type="checkbox" checked /> Densification heatmap</label>
-        <label class="toggle"><input id="toggle-hotspots" type="checkbox" checked /> Infill hotspots (context)</label>
-        <label class="toggle"><input id="toggle-gaps" type="checkbox" checked /> Areas needing local advocates</label>
-        <label class="toggle"><input id="toggle-priority" type="checkbox" checked /> Strategic priority layer</label>
-      </div>
+ <aside id="sidepanel">
+  <div class="panel">
+    <h2>City Pressure Snapshot</h2>
+    <div class="kpi">
+      <div class="k"><div class="n" id="k-permits">–</div><div class="l">Dev. permits</div></div>
+      <div class="k blue"><div class="n" id="k-enu-yes">–</div><div class="l">ENU Presence (Yes)</div></div>
+      <div class="k red"><div class="n" id="k-enu-no">–</div><div class="l">ENU Presence (No)</div></div>
+      <div class="k high"><div class="n" id="k-priority-high">–</div><div class="l">High Priority</div></div>
+      <div class="k medium"><div class="n" id="k-priority-medium">–</div><div class="l">Medium Priority</div></div>
+      <div class="k low"><div class="n" id="k-priority-low">–</div><div class="l">Low Priority</div></div>
+    </div>
+  </div>
 
-      <div class="panel">
-        <h2>Legend</h2>
-        <div class="legend">
-          <div class="row"><span><span class="swatch hot"></span> High densification</span></div>
-          <div class="row"><span><span class="swatch warm"></span> Moderate densification</span></div>
-          <div class="row"><span><span class="swatch cool"></span> Low densification</span></div>
-          <div class="row"><span><span class="swatch enu-yes"></span> ENU presence (Yes)</span></div>
-          <div class="row"><span><span class="swatch enu-no"></span> ENU presence (No)</span></div>
-          <div class="row"><span><span class="swatch priority-high"></span> Strategic priority: High</span></div>
-          <div class="row"><span><span class="swatch priority-medium"></span> Strategic priority: Medium</span></div>
-          <div class="row"><span><span class="swatch priority-low"></span> Strategic priority: Low</span></div>
-        </div>
-      </div>
+  <div class="panel">
+    <h2>Layers</h2>
+    <label class="toggle"><input id="toggle-heat" type="checkbox" checked /> Densification heatmap</label>
+    <label class="toggle"><input id="toggle-hotspots" type="checkbox" checked /> Infill hotspots (context)</label>
+    <label class="toggle"><input id="toggle-gaps" type="checkbox" checked /> Areas needing local advocates</label>
+    <label class="toggle"><input id="toggle-priority" type="checkbox" checked /> Strategic priority layer</label>
+  </div>
 
-      <div class="panel">
-       <h2>City Pressure Snapshot</h2>
-        <div class="kpi">
-          <div class="k"><div class="n" id="k-permits">–</div><div class="l">Dev. permits</div></div>
-          <div class="k blue"><div class="n" id="k-enu-yes">–</div><div class="l">ENU Presence (Yes)</div></div>
-          <div class="k red"><div class="n" id="k-enu-no">–</div><div class="l">ENU Presence (No)</div></div>
-          <div class="k high"><div class="n" id="k-priority-high">–</div><div class="l">High Priority</div></div>
-          <div class="k medium"><div class="n" id="k-priority-medium">–</div><div class="l">Medium Priority</div></div>
-          <div class="k low"><div class="n" id="k-priority-low">–</div><div class="l">Low Priority</div></div>
-        </div>
-      </div>
-    </aside>
+  <div class="panel">
+    <h2>Legend</h2>
+    <div class="legend">
+      <div class="row"><span><span class="swatch hot"></span> High densification</span></div>
+      <div class="row"><span><span class="swatch warm"></span> Moderate densification</span></div>
+      <div class="row"><span><span class="swatch cool"></span> Low densification</span></div>
+      <div class="row"><span><span class="swatch enu-yes"></span> ENU presence (Yes)</span></div>
+      <div class="row"><span><span class="swatch enu-no"></span> ENU presence (No)</span></div>
+      <div class="row"><span><span class="swatch priority-high"></span> Strategic priority: High</span></div>
+      <div class="row"><span><span class="swatch priority-medium"></span> Strategic priority: Medium</span></div>
+      <div class="row"><span><span class="swatch priority-low"></span> Strategic priority: Low</span></div>
+    </div>
+  </div>
+</aside>
 
     <main id="map"></main>
   </div>
