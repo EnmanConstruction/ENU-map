@@ -491,7 +491,7 @@
 
         const allChip = document.createElement("span");
         allChip.className = "chip reset active";
-        allChip.textContent = "All wards";
+        allChip.textContent = "All Wards";
         allChip.addEventListener("click", () => {
           state.filters.ward = null;
           document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
@@ -503,7 +503,13 @@
         uniqueWards(state.datasets.publicMap).forEach(ward => {
           const chip = document.createElement("span");
           chip.className = "chip";
-          chip.textContent = ward;
+          chip.textContent = ward === "O-day'min"
+  ? "O-day'min Ward"
+  : ward === "papastew"
+  ? "papastew Ward"
+  : ward === "(mock)"
+  ? "Demo Ward"
+  : ward;
           chip.addEventListener("click", () => {
             state.filters.ward = ward;
             document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
