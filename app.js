@@ -1,36 +1,24 @@
 (function () {
   // =========================
-  // ENU MAP ENGINE
+  // ENU MAP ENGINE + PRIORITY SYSTEM
   // =========================
 
-  // Clean up previous hot reloads
   if (window.__enuMap) {
     try { window.__enuMap.remove(); } catch (e) {}
     window.__enuMap = null;
   }
 
-  // =========================
-  // CONFIG
-  // =========================
   const CONFIG = {
-    // Later, ENU will give us published Google Sheet CSV links
     PUBLIC_DATA_URL: null,
     INTERNAL_DATA_URL: null,
-
-    // App behavior
     USE_REMOTE_PUBLIC_DATA: false,
     USE_REMOTE_INTERNAL_DATA: false,
-
     DEFAULT_CENTER: [53.5444, -113.4909],
     DEFAULT_ZOOM: 11,
     MIN_ZOOM: 9,
     MAX_ZOOM: 19
   };
 
-  // =========================
-  // FALLBACK DATA
-  // =========================
-  // This keeps the app working even before ENU provides live sheet links.
   const FALLBACK_PUBLIC_DATA = [
     { name:"Oliver",      lat:53.544,  lng:-113.516, permits:210, infill:120, enuPresence:true,  ward:"O-day'min", councillor:"TBD", leader:"", leaderEmail:"", notes:"" },
     { name:"Downtown",    lat:53.545,  lng:-113.495, permits:260, infill: 80, enuPresence:true,  ward:"O-day'min", councillor:"TBD", leader:"", leaderEmail:"", notes:"" },
@@ -46,16 +34,12 @@
     { name:"Laurel",      lat:53.448,  lng:-113.377, permits: 85, infill: 18, enuPresence:false, ward:"(mock)",     councillor:"TBD", leader:"", leaderEmail:"", notes:"" }
   ];
 
-  // Internal strategy data placeholder for future use
   const FALLBACK_INTERNAL_DATA = [
     { name:"Oliver", volunteers:4, lawnSigns:12, petitionSignatures:34, engagementScore:8, priorityLevel:"High", notes:"Strong support base" },
     { name:"Westmount", volunteers:1, lawnSigns:2, petitionSignatures:5, engagementScore:3, priorityLevel:"Medium", notes:"Needs more support" },
     { name:"Garneau", volunteers:0, lawnSigns:0, petitionSignatures:2, engagementScore:2, priorityLevel:"High", notes:"Pressure area, weak engagement" }
   ];
 
-  // =========================
-  // APP STATE
-  // =========================
   const state = {
     filters: {
       ward: null
@@ -63,15 +47,9 @@
     datasets: {
       publicMap: [],
       internalStrategy: []
-    },
-    ui: {
-      activeDetails: null
     }
   };
 
-  // =========================
-  // HELPERS
-  // =========================
   function toBool(v) {
     const s = String(v ?? "").trim().toLowerCase();
     return s === "yes" || s === "true" || s === "1" || s === "y";
@@ -116,9 +94,6 @@
     return state.datasets.internalStrategy.find(d => d.name === name) || null;
   }
 
-  // =========================
-  // CSV PARSER
-  // =========================
   function parseCSV(text) {
     const rows = [];
     let row = [];
@@ -167,9 +142,6 @@
     return rows;
   }
 
-  // =========================
-  // DATA LOADERS
-  // =========================
   async function loadRemoteCSV(url) {
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) throw new Error(`Failed to fetch CSV: ${res.status}`);
@@ -203,7 +175,6 @@
       }))
       .filter(r => r.name && Number.isFinite(r.lat) && Number.isFinite(r.lng));
 
-      console.log(`Loaded ${rows.length} public rows from remote source.`);
       return rows.length ? rows : FALLBACK_PUBLIC_DATA;
     } catch (err) {
       console.error("Public data load failed. Falling back.", err);
@@ -232,7 +203,6 @@
         notes: r[idx("notes")] || ""
       })).filter(r => r.name);
 
-      console.log(`Loaded ${rows.length} internal rows from remote source.`);
       return rows.length ? rows : FALLBACK_INTERNAL_DATA;
     } catch (err) {
       console.error("Internal data load failed. Falling back.", err);
@@ -240,9 +210,43 @@
     }
   }
 
-  // =========================
-  // MAP INIT
-  // =========================
+  function calculatePriorityScore(row) {
+    const internal = getInternalByName(row.name);
+
+    const permitScore = Math.min(row.permits / 25, 10);
+    const infillScore = Math.min(row.infill / 12, 10);
+    const noPresenceBonus = row.enuPresence ? 0 : 3;
+
+    let engagementBonus = 0;
+    if (internal) {
+      if (internal.engagementScore <= 2) engagementBonus = 3;
+      else if (internal.engagementScore <= 4) engagementBonus = 2;
+      else if (internal.engagementScore <= 6) engagementBonus = 1;
+    } else {
+      engagementBonus = 1.5;
+    }
+
+    const score =
+      (permitScore * 0.4) +
+      (infillScore * 0.35) +
+      noPresenceBonus +
+      engagementBonus;
+
+    return Number(score.toFixed(2));
+  }
+
+  function getPriorityLevel(score) {
+    if (score >= 7.5) return "High";
+    if (score >= 4.5) return "Medium";
+    return "Low";
+  }
+
+  function priorityColor(level) {
+    if (level === "High") return "#ef4444";
+    if (level === "Medium") return "#f59e0b";
+    return "#22c55e";
+  }
+
   const map = L.map("map", {
     zoomControl: false,
     minZoom: CONFIG.MIN_ZOOM,
@@ -257,17 +261,12 @@
     attribution: "&copy; OpenStreetMap contributors"
   }).addTo(map);
 
-  // =========================
-  // LAYERS
-  // =========================
   const presenceLayer = L.layerGroup().addTo(map);
   const hotspotLayer = L.layerGroup().addTo(map);
   const gapsLayer = L.layerGroup().addTo(map);
+  const priorityLayer = L.layerGroup().addTo(map);
   let heatLayer = null;
 
-  // =========================
-  // UI BUILDERS
-  // =========================
   function buildWardChips() {
     const bar = document.getElementById("filters");
     if (!bar) return;
@@ -311,6 +310,8 @@
     }
 
     const internal = getInternalByName(row.name);
+    const score = calculatePriorityScore(row);
+    const priority = getPriorityLevel(score);
 
     box.classList.remove("hidden");
     box.innerHTML = `
@@ -318,10 +319,12 @@
       <div style="display:flex; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
         <span class="badge ${row.enuPresence ? "yes" : "no"}">${row.enuPresence ? "ENU Presence: Yes" : "ENU Presence: No"}</span>
         <span class="badge">Ward: ${row.ward}</span>
+        <span class="badge priority-${priority.toLowerCase()}">Priority: ${priority}</span>
       </div>
 
       <div class="row"><span>Active permits</span><strong>${row.permits.toLocaleString()}</strong></div>
       <div class="row"><span>Infill permits</span><strong>${row.infill.toLocaleString()}</strong></div>
+      <div class="row"><span>Priority score</span><strong>${score}</strong></div>
       <div class="row"><span>Councillor</span><strong>${row.councillor}</strong></div>
 
       ${row.leader ? `<div class="row"><span>ENU leader</span><strong>${row.leader}</strong></div>` : ""}
@@ -334,15 +337,12 @@
         <div class="row"><span>Lawn signs</span><strong>${internal.lawnSigns}</strong></div>
         <div class="row"><span>Petition signatures</span><strong>${internal.petitionSignatures}</strong></div>
         <div class="row"><span>Engagement score</span><strong>${internal.engagementScore}</strong></div>
-        <div class="row"><span>Priority</span><strong>${internal.priorityLevel || "-"}</strong></div>
+        <div class="row"><span>Priority level (manual)</span><strong>${internal.priorityLevel || "-"}</strong></div>
         ${internal.notes ? `<div class="row"><span>Internal notes</span><strong>${internal.notes}</strong></div>` : ""}
       ` : ""}
     `;
   }
 
-  // =========================
-  // RENDERERS
-  // =========================
   function renderPresence(rows) {
     presenceLayer.clearLayers();
 
@@ -447,18 +447,60 @@
     }
   }
 
+  function renderPriority(rows) {
+    const toggle = document.getElementById("toggle-priority");
+    priorityLayer.clearLayers();
+
+    rows.forEach(d => {
+      const score = calculatePriorityScore(d);
+      const level = getPriorityLevel(score);
+
+      const priorityMarker = L.circleMarker([d.lat, d.lng], {
+        radius: 18,
+        weight: 2,
+        color: priorityColor(level),
+        fillColor: priorityColor(level),
+        fillOpacity: 0.15
+      }).bindPopup(`
+        <div><strong>${d.name}</strong></div>
+        <div><strong>Priority:</strong> ${level}</div>
+        <div><strong>Priority score:</strong> ${score}</div>
+      `);
+
+      priorityLayer.addLayer(priorityMarker);
+    });
+
+    if (toggle && !toggle.checked) {
+      map.removeLayer(priorityLayer);
+    } else {
+      priorityLayer.addTo(map);
+    }
+  }
+
   function renderKPIs(rows) {
     const permits = rows.reduce((sum, r) => sum + r.permits, 0);
     const yes = rows.filter(r => r.enuPresence).length;
     const no = rows.filter(r => !r.enuPresence).length;
 
+    const priorityCounts = rows.reduce((acc, row) => {
+      const level = getPriorityLevel(calculatePriorityScore(row));
+      acc[level] = (acc[level] || 0) + 1;
+      return acc;
+    }, { High: 0, Medium: 0, Low: 0 });
+
     const kPermits = document.getElementById("k-permits");
     const kYes = document.getElementById("k-enu-yes");
     const kNo = document.getElementById("k-enu-no");
+    const kHigh = document.getElementById("k-priority-high");
+    const kMedium = document.getElementById("k-priority-medium");
+    const kLow = document.getElementById("k-priority-low");
 
     if (kPermits) kPermits.textContent = permits.toLocaleString();
     if (kYes) kYes.textContent = yes.toLocaleString();
     if (kNo) kNo.textContent = no.toLocaleString();
+    if (kHigh) kHigh.textContent = priorityCounts.High.toLocaleString();
+    if (kMedium) kMedium.textContent = priorityCounts.Medium.toLocaleString();
+    if (kLow) kLow.textContent = priorityCounts.Low.toLocaleString();
   }
 
   function renderAll() {
@@ -468,21 +510,16 @@
     renderHeat(rows);
     renderHotspots(rows);
     renderGaps(rows);
+    renderPriority(rows);
     renderKPIs(rows);
     setDetails(null);
   }
 
-  // =========================
-  // EVENT HOOKS
-  // =========================
-  ["toggle-heat", "toggle-hotspots", "toggle-gaps"].forEach(id => {
+  ["toggle-heat", "toggle-hotspots", "toggle-gaps", "toggle-priority"].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener("change", renderAll);
   });
 
-  // =========================
-  // BOOT
-  // =========================
   async function boot() {
     const [publicRows, internalRows] = await Promise.all([
       loadPublicData(),
@@ -505,9 +542,6 @@
   });
 })();
 
-// =========================
-// MOBILE DRAWER TOGGLE
-// =========================
 (function () {
   const side = document.getElementById("sidepanel");
   const btn = document.getElementById("panelToggle");
