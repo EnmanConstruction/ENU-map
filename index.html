@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Edmonton Neighbourhoods United — Citywide Map</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+
+  <style>
+    :root{
+      --bg:#0b1020;
+      --card:#12182b;
+      --accent:#58a6ff;
+      --hot:#ef4444;
+      --warm:#f59e0b;
+      --cool:#22c55e;
+      --oilers-blue:#0038A8;
+      --flames-red:#CE1126;
+      --priority-high:#ef4444;
+      --priority-medium:#f59e0b;
+      --priority-low:#22c55e;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: var(--bg);
+      color: #e6eefc;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    #app{
+      display:grid;
+      grid-template-columns:340px 1fr;
+      grid-template-rows:auto auto 1fr;
+      height:100vh;
+    }
+
+    header{
+      grid-column:1/3;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:12px 16px;
+      background:linear-gradient(180deg,#0f1730,#0b1020);
+      border-bottom:1px solid #1b2648;
+    }
+
+    header h1{
+      font-size:18px;
+      margin:0;
+    }
+
+    .meta{
+      opacity:.8;
+      font-size:12px;
+    }
+
+    .filters{
+      grid-column:1/3;
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      padding:10px 16px;
+      border-bottom:1px solid #1b2648;
+      background:linear-gradient(180deg,#0f1730,#0b1020);
+    }
+
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 10px;
+      font-size:12px;
+      border-radius:999px;
+      border:1px solid #1b2648;
+      background:#0e1530;
+      cursor:pointer;
+      user-select:none;
+    }
+
+    .chip.active{
+      outline:2px solid var(--accent);
+    }
+
+    .chip.reset{
+      opacity:.9;
+    }
+
+    aside{
+      background:var(--card);
+      border-right:1px solid #1b2648;
+      padding:12px;
+      overflow:auto;
+    }
+
+    .panel{
+      background:rgba(255,255,255,.02);
+      border:1px solid #1b2648;
+      border-radius:14px;
+      padding:12px;
+      margin-bottom:12px;
+    }
+
+    .panel h2{
+      margin:0 0 10px 0;
+      font-size:16px;
+    }
+
+    .legend .row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      font-size:12px;
+      margin:6px 0;
+    }
+
+    .swatch{
+      width:16px;
+      height:10px;
+      border-radius:2px;
+      display:inline-block;
+      margin-right:8px;
+    }
+
+    .swatch.hot{background:var(--hot)}
+    .swatch.warm{background:var(--warm)}
+    .swatch.cool{background:var(--cool)}
+    .swatch.enu-yes{background:var(--oilers-blue)}
+    .swatch.enu-no{background:var(--flames-red)}
+    .swatch.priority-high{background:var(--priority-high)}
+    .swatch.priority-medium{background:var(--priority-medium)}
+    .swatch.priority-low{background:var(--priority-low)}
+
+    #map{
+      width:100%;
+      height:100%;
+      min-height:500px;
+    }
+
+    .kpi{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:8px;
+      margin-top:10px;
+    }
+
+    .k{
+      background:#0e1530;
+      border:1px solid #1b2648;
+      border-radius:12px;
+      padding:8px;
+      text-align:center;
+    }
+
+    .k .n{
+      font-weight:700;
+      font-size:16px;
+    }
+
+    .k.blue{color:var(--oilers-blue)}
+    .k.red{color:var(--flames-red)}
+    .k.high{color:var(--priority-high)}
+    .k.medium{color:var(--priority-medium)}
+    .k.low{color:var(--priority-low)}
+
+    .toggle{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      margin:8px 0;
+    }
+
+    .leaflet-container a{
+      color:#9fb0ce;
+    }
+
+    .details{
+      position:fixed;
+      right:16px;
+      bottom:16px;
+      width:340px;
+      max-width:92vw;
+      background:var(--card);
+      border:1px solid #1b2648;
+      border-radius:14px;
+      padding:12px;
+      box-shadow:0 10px 30px rgba(0,0,0,.45);
+      z-index:1200;
+    }
+
+    .details.hidden{
+      display:none;
+    }
+
+    .details h3{
+      margin:0 0 8px 0;
+      font-size:16px;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 8px;
+      border-radius:999px;
+      font-size:11px;
+      border:1px solid #1b2648;
+    }
+
+    .badge.yes{
+      background:rgba(0,56,168,.15);
+      color:var(--oilers-blue);
+    }
+
+    .badge.no{
+      background:rgba(206,17,38,.15);
+      color:var(--flames-red);
+    }
+
+    .badge.priority-high{
+      background:rgba(239,68,68,.15);
+      color:var(--priority-high);
+    }
+
+    .badge.priority-medium{
+      background:rgba(245,158,11,.15);
+      color:var(--priority-medium);
+    }
+
+    .badge.priority-low{
+      background:rgba(34,197,94,.15);
+      color:var(--priority-low);
+    }
+
+    .row{
+      display:flex;
+      justify-content:space-between;
+      margin:4px 0;
+      font-size:13px;
+      gap:12px;
+    }
+
+    .hamburger{
+      display:none;
+      margin-left:auto;
+      background:transparent;
+      color:#e6eefc;
+      border:1px solid #1b2648;
+      border-radius:10px;
+      padding:6px 10px;
+      font-size:18px;
+      cursor:pointer;
+    }
+
+    .leaflet-interactive{
+      touch-action:manipulation;
+    }
+
+    .backdrop{
+      position:fixed;
+      inset:56px 0 0 0;
+      background:rgba(0,0,0,.35);
+      z-index:999;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .2s ease;
+    }
+
+    .backdrop.show{
+      opacity:1;
+      pointer-events:auto;
+    }
+
+    @media (max-width: 900px){
+      #app{
+        grid-template-columns:1fr;
+        grid-template-rows:auto auto 1fr;
+      }
+
+      .hamburger{
+        display:inline-block;
+      }
+
+      #sidepanel{
+        position:fixed;
+        top:56px;
+        left:0;
+        width:86vw;
+        height:calc(100vh - 56px);
+        background:var(--card);
+        border-right:1px solid #1b2648;
+        overflow:auto;
+        transform:translateX(-105%);
+        transition:transform .25s ease;
+        z-index:1000;
+      }
+
+      #sidepanel.open{
+        transform:translateX(0);
+      }
+
+      #map{
+        height:calc(100vh - 108px);
+        min-height:400px;
+      }
+
+      .kpi{
+        grid-template-columns:repeat(2,1fr);
+      }
+
+      .details{
+        left:12px;
+        right:12px;
+        bottom:12px;
+        width:auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <div>
+        <h1>Edmonton Neighbourhoods United — Citywide Densification & Coverage</h1>
+        <div class="meta">Live mock • ENU presence • Active permits • Ward/Councillor</div>
+      </div>
+      <button id="panelToggle" class="hamburger" aria-expanded="false" aria-controls="sidepanel">☰</button>
+    </header>
+
+    <div id="filters" class="filters"></div>
+
+    <aside id="sidepanel">
+      <div class="panel">
+        <h2>Layers</h2>
+        <label class="toggle"><input id="toggle-heat" type="checkbox" checked /> Densification heatmap</label>
+        <label class="toggle"><input id="toggle-hotspots" type="checkbox" checked /> Infill hotspots (context)</label>
+        <label class="toggle"><input id="toggle-gaps" type="checkbox" checked /> Areas needing local advocates</label>
+        <label class="toggle"><input id="toggle-priority" type="checkbox" checked /> Strategic priority layer</label>
+      </div>
+
+      <div class="panel">
+        <h2>Legend</h2>
+        <div class="legend">
+          <div class="row"><span><span class="swatch hot"></span> High densification</span></div>
+          <div class="row"><span><span class="swatch warm"></span> Moderate densification</span></div>
+          <div class="row"><span><span class="swatch cool"></span> Low densification</span></div>
+          <div class="row"><span><span class="swatch enu-yes"></span> ENU presence (Yes)</span></div>
+          <div class="row"><span><span class="swatch enu-no"></span> ENU presence (No)</span></div>
+          <div class="row"><span><span class="swatch priority-high"></span> Strategic priority: High</span></div>
+          <div class="row"><span><span class="swatch priority-medium"></span> Strategic priority: Medium</span></div>
+          <div class="row"><span><span class="swatch priority-low"></span> Strategic priority: Low</span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Citywide snapshot</h2>
+        <div class="kpi">
+          <div class="k"><div class="n" id="k-permits">–</div><div class="l">Dev. permits</div></div>
+          <div class="k blue"><div class="n" id="k-enu-yes">–</div><div class="l">ENU Presence (Yes)</div></div>
+          <div class="k red"><div class="n" id="k-enu-no">–</div><div class="l">ENU Presence (No)</div></div>
+          <div class="k high"><div class="n" id="k-priority-high">–</div><div class="l">High Priority</div></div>
+          <div class="k medium"><div class="n" id="k-priority-medium">–</div><div class="l">Medium Priority</div></div>
+          <div class="k low"><div class="n" id="k-priority-low">–</div><div class="l">Low Priority</div></div>
+        </div>
+      </div>
+    </aside>
+
+    <main id="map"></main>
+  </div>
+
+  <div id="details" class="details hidden" role="region" aria-live="polite"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+
+  <script>
+    (function () {
+      if (window.__enuMap) {
+        try { window.__enuMap.remove(); } catch (e) {}
+        window.__enuMap = null;
+      }
+
+      const FALLBACK_PUBLIC_DATA = [
+        { name:"Oliver",      lat:53.544,  lng:-113.516, permits:210, infill:120, enuPresence:true,  ward:"O-day'min", councillor:"TBD", leader:"", leaderEmail:"", notes:"" },
+        { name:"Downtown",    lat:53.545,  lng:-113.495, permits:260, infill: 80, enuPresence:true,  ward:"O-day'min", councillor:"TBD", leader:"", leaderEmail:"", notes:"" },
+        { name:"Strathcona",  lat:53.522,  lng:-113.501, permits:180, infill:110, enuPresence:true,  ward:"papastew",  councillor:"TBD", leader:"", leaderEmail:"", notes:"" },
+        { name:"Westmount",   lat:53.554,  lng:-113.543, permits:120, infill: 85, enuPresence:false, ward:"O-day'min", councillor:"TBD", leader:"", leaderEmail:"", notes:"" },
+        { name:"Garneau",     lat:53.5225, lng:-113.520, permits:140, infill: 70, enuPresence:false, ward:"papastew",  councillor:"TBD", leader:"", leaderEmail:"", notes:"" },
+        { name:"Glenora",     lat:53.553,  lng:-113.566, permits: 90, infill: 60, enuPresence:false, ward:"O-day'min", councillor:"TBD", leader:"", leaderEmail:"", notes:"" },
+        { name:"Ritchie",     lat:53.512,  lng:-113.485, permits:100, infill: 75, enuPresence:true,  ward:"papastew",  councillor:"TBD", leader:"", leaderEmail:"", notes:"" },
+        { name:"Highlands",   lat:53.569,  lng:-113.429, permits: 80, infill: 50, enuPresence:false, ward:"(mock)",    councillor:"TBD", leader:"", leaderEmail:"", notes:"" },
+        { name:"Bonnie Doon", lat:53.526,  lng:-113.468, permits: 95, infill: 55, enuPresence:false, ward:"papastew",  councillor:"TBD", leader:"", leaderEmail:"", notes:"" },
+        { name:"Keswick",     lat:53.415,  lng:-113.622, permits: 60, infill: 15, enuPresence:false, ward:"(mock)",    councillor:"TBD", leader:"", leaderEmail:"", notes:"" },
+        { name:"Windermere",  lat:53.431,  lng:-113.627, permits: 70, infill: 20, enuPresence:false, ward:"(mock)",    councillor:"TBD", leader:"", leaderEmail:"", notes:"" },
+        { name:"Laurel",      lat:53.448,  lng:-113.377, permits: 85, infill: 18, enuPresence:false, ward:"(mock)",    councillor:"TBD", leader:"", leaderEmail:"", notes:"" }
+      ];
+
+      const FALLBACK_INTERNAL_DATA = [
+        { name:"Oliver", volunteers:4, lawnSigns:12, petitionSignatures:34, engagementScore:8, priorityLevel:"High", notes:"Strong support base" },
+        { name:"Westmount", volunteers:1, lawnSigns:2, petitionSignatures:5, engagementScore:3, priorityLevel:"Medium", notes:"Needs more support" },
+        { name:"Garneau", volunteers:0, lawnSigns:0, petitionSignatures:2, engagementScore:2, priorityLevel:"High", notes:"Pressure area, weak engagement" }
+      ];
+
+      const state = {
+        filters: { ward: null },
+        datasets: {
+          publicMap: FALLBACK_PUBLIC_DATA,
+          internalStrategy: FALLBACK_INTERNAL_DATA
+        }
+      };
+
+      function uniqueWards(list) {
+        return [...new Set(list.map(d => d.ward).filter(Boolean))];
+      }
+
+      function fitToWard(ward) {
+        const rows = state.datasets.publicMap.filter(d => d.ward === ward);
+        const pts = rows.map(d => [d.lat, d.lng]).filter(p => Number.isFinite(p[0]) && Number.isFinite(p[1]));
+        if (!pts.length || !window.__enuMap) return;
+        const bounds = L.latLngBounds(pts);
+        window.__enuMap.fitBounds(bounds.pad(0.2));
+      }
+
+      function colorByInfill(n) {
+        if (n >= 140) return "#ef4444";
+        if (n >= 90) return "#f59e0b";
+        return "#22c55e";
+      }
+
+      function scaleIntensity(n) {
+        const max = 320;
+        return Math.max(0.1, Math.min(n / max, 1));
+      }
+
+      function getFilteredPublicRows() {
+        const rows = state.datasets.publicMap;
+        if (!state.filters.ward) return rows;
+        return rows.filter(d => d.ward === state.filters.ward);
+      }
+
+      function getInternalByName(name) {
+        return state.datasets.internalStrategy.find(d => d.name === name) || null;
+      }
+
+      function calculatePriorityScore(row) {
+        const internal = getInternalByName(row.name);
+
+        const permitScore = Math.min(row.permits / 25, 10);
+        const infillScore = Math.min(row.infill / 12, 10);
+        const noPresenceBonus = row.enuPresence ? 0 : 3;
+
+        let engagementBonus = 0;
+        if (internal) {
+          if (internal.engagementScore <= 2) engagementBonus = 3;
+          else if (internal.engagementScore <= 4) engagementBonus = 2;
+          else if (internal.engagementScore <= 6) engagementBonus = 1;
+        } else {
+          engagementBonus = 1.5;
+        }
+
+        const score =
+          (permitScore * 0.4) +
+          (infillScore * 0.35) +
+          noPresenceBonus +
+          engagementBonus;
+
+        return Number(score.toFixed(2));
+      }
+
+      function getPriorityLevel(score) {
+        if (score >= 7.5) return "High";
+        if (score >= 4.5) return "Medium";
+        return "Low";
+      }
+
+      function priorityColor(level) {
+        if (level === "High") return "#ef4444";
+        if (level === "Medium") return "#f59e0b";
+        return "#22c55e";
+      }
+
+      function buildWardChips() {
+        const bar = document.getElementById("filters");
+        if (!bar) return;
+
+        bar.innerHTML = "";
+
+        const allChip = document.createElement("span");
+        allChip.className = "chip reset active";
+        allChip.textContent = "All wards";
+        allChip.addEventListener("click", () => {
+          state.filters.ward = null;
+          document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+          allChip.classList.add("active");
+          renderAll();
+        });
+        bar.appendChild(allChip);
+
+        uniqueWards(state.datasets.publicMap).forEach(ward => {
+          const chip = document.createElement("span");
+          chip.className = "chip";
+          chip.textContent = ward;
+          chip.addEventListener("click", () => {
+            state.filters.ward = ward;
+            document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+            chip.classList.add("active");
+            renderAll();
+            fitToWard(ward);
+          });
+          bar.appendChild(chip);
+        });
+      }
+
+      function setDetails(row) {
+        const box = document.getElementById("details");
+        if (!box) return;
+
+        if (!row) {
+          box.classList.add("hidden");
+          box.innerHTML = "";
+          return;
+        }
+
+        const internal = getInternalByName(row.name);
+        const score = calculatePriorityScore(row);
+        const priority = getPriorityLevel(score);
+
+        box.classList.remove("hidden");
+        box.innerHTML = `
+          <h3>${row.name}</h3>
+          <div style="display:flex; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+            <span class="badge ${row.enuPresence ? "yes" : "no"}">${row.enuPresence ? "ENU Presence: Yes" : "ENU Presence: No"}</span>
+            <span class="badge">Ward: ${row.ward}</span>
+            <span class="badge priority-${priority.toLowerCase()}">Priority: ${priority}</span>
+          </div>
+
+          <div class="row"><span>Active permits</span><strong>${row.permits.toLocaleString()}</strong></div>
+          <div class="row"><span>Infill permits</span><strong>${row.infill.toLocaleString()}</strong></div>
+          <div class="row"><span>Priority score</span><strong>${score}</strong></div>
+          <div class="row"><span>Councillor</span><strong>${row.councillor}</strong></div>
+
+          ${row.leader ? `<div class="row"><span>ENU leader</span><strong>${row.leader}</strong></div>` : ""}
+          ${row.leaderEmail ? `<div class="row"><span>Leader email</span><strong>${row.leaderEmail}</strong></div>` : ""}
+          ${row.notes ? `<div class="row"><span>Public notes</span><strong>${row.notes}</strong></div>` : ""}
+
+          ${internal ? `
+            <hr style="border-color:#1b2648; margin:10px 0;">
+            <div class="row"><span>Volunteers</span><strong>${internal.volunteers}</strong></div>
+            <div class="row"><span>Lawn signs</span><strong>${internal.lawnSigns}</strong></div>
+            <div class="row"><span>Petition signatures</span><strong>${internal.petitionSignatures}</strong></div>
+            <div class="row"><span>Engagement score</span><strong>${internal.engagementScore}</strong></div>
+            <div class="row"><span>Priority level (manual)</span><strong>${internal.priorityLevel || "-"}</strong></div>
+            ${internal.notes ? `<div class="row"><span>Internal notes</span><strong>${internal.notes}</strong></div>` : ""}
+          ` : ""}
+        `;
+      }
+
+      const map = L.map("map", {
+        zoomControl: false,
+        minZoom: 9,
+        maxZoom: 19
+      }).setView([53.5444, -113.4909], 11);
+
+      window.__enuMap = map;
+
+      L.control.zoom({ position: "bottomright" }).addTo(map);
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "&copy; OpenStreetMap contributors"
+      }).addTo(map);
+
+      const presenceLayer = L.layerGroup().addTo(map);
+      const hotspotLayer = L.layerGroup().addTo(map);
+      const gapsLayer = L.layerGroup().addTo(map);
+      const priorityLayer = L.layerGroup().addTo(map);
+      let heatLayer = null;
+
+      function renderPresence(rows) {
+        presenceLayer.clearLayers();
+
+        rows.forEach(d => {
+          const marker = L.circleMarker([d.lat, d.lng], {
+            radius: d.enuPresence ? 11 : 10,
+            weight: 2,
+            color: d.enuPresence ? "#0038A8" : "#CE1126",
+            fillColor: d.enuPresence ? "#0038A8" : "#CE1126",
+            fillOpacity: 0.5
+          })
+          .bindPopup(`
+            <div><strong>${d.name}</strong></div>
+            <div><strong>ENU presence:</strong> ${d.enuPresence ? "Yes" : "No"}</div>
+            <div><strong>Active permits:</strong> ${d.permits.toLocaleString()}</div>
+            <div><strong>Ward:</strong> ${d.ward}</div>
+            <div><strong>Councillor:</strong> ${d.councillor}</div>
+          `)
+          .on("click", () => setDetails(d));
+
+          presenceLayer.addLayer(marker);
+        });
+      }
+
+      function renderHeat(rows) {
+        const toggle = document.getElementById("toggle-heat");
+        const points = rows.map(d => [d.lat, d.lng, scaleIntensity(d.permits)]);
+
+        if (heatLayer) {
+          map.removeLayer(heatLayer);
+          heatLayer = null;
+        }
+
+        heatLayer = L.heatLayer(points, {
+          radius: 28,
+          blur: 18,
+          maxZoom: 14,
+          minOpacity: 0.2
+        });
+
+        if (!toggle || toggle.checked) {
+          heatLayer.addTo(map);
+        }
+      }
+
+      function renderHotspots(rows) {
+        const toggle = document.getElementById("toggle-hotspots");
+        hotspotLayer.clearLayers();
+
+        rows.filter(d => d.infill >= 90).forEach(d => {
+          const hotspot = L.circleMarker([d.lat, d.lng], {
+            radius: Math.min(18, 8 + d.infill / 15),
+            weight: 1.5,
+            color: "#fff",
+            fillColor: colorByInfill(d.infill),
+            fillOpacity: 0.85
+          }).bindPopup(`
+            <div style="display:flex;justify-content:space-between;gap:8px;">
+              <strong>${d.name}</strong>
+              <span style="font-size:11px;border:1px solid #1b2648;padding:2px 6px;border-radius:999px;">Infill hotspot</span>
+            </div>
+            <div>Infill-type permits: <strong>${d.infill.toLocaleString()}</strong></div>
+          `);
+
+          hotspotLayer.addLayer(hotspot);
+        });
+
+        if (toggle && !toggle.checked) {
+          map.removeLayer(hotspotLayer);
+        } else {
+          hotspotLayer.addTo(map);
+        }
+      }
+
+      function renderGaps(rows) {
+        const toggle = document.getElementById("toggle-gaps");
+        gapsLayer.clearLayers();
+
+        rows
+          .filter(d => ((d.permits >= 90 && d.infill < 60) || (!d.enuPresence && d.permits >= 80)))
+          .forEach(d => {
+            const gap = L.circleMarker([d.lat, d.lng], {
+              radius: 10,
+              weight: 1.2,
+              dashArray: "4,3",
+              color: "#f59e0b",
+              fillColor: "#f59e0b",
+              fillOpacity: 0.25
+            }).bindPopup(`
+              <div><strong>${d.name}</strong></div>
+              <div><strong>Needs local advocates</strong></div>
+              <div>Permits: <strong>${d.permits.toLocaleString()}</strong>, Infill: <strong>${d.infill.toLocaleString()}</strong></div>
+            `);
+
+            gapsLayer.addLayer(gap);
+          });
+
+        if (toggle && !toggle.checked) {
+          map.removeLayer(gapsLayer);
+        } else {
+          gapsLayer.addTo(map);
+        }
+      }
+
+      function renderPriority(rows) {
+        const toggle = document.getElementById("toggle-priority");
+        priorityLayer.clearLayers();
+
+        rows.forEach(d => {
+          const score = calculatePriorityScore(d);
+          const level = getPriorityLevel(score);
+
+          const priorityMarker = L.circleMarker([d.lat, d.lng], {
+            radius: 18,
+            weight: 2,
+            color: priorityColor(level),
+            fillColor: priorityColor(level),
+            fillOpacity: 0.15
+          }).bindPopup(`
+            <div><strong>${d.name}</strong></div>
+            <div><strong>Priority:</strong> ${level}</div>
+            <div><strong>Priority score:</strong> ${score}</div>
+          `);
+
+          priorityLayer.addLayer(priorityMarker);
+        });
+
+        if (toggle && !toggle.checked) {
+          map.removeLayer(priorityLayer);
+        } else {
+          priorityLayer.addTo(map);
+        }
+      }
+
+      function renderKPIs(rows) {
+        const permits = rows.reduce((sum, r) => sum + r.permits, 0);
+        const yes = rows.filter(r => r.enuPresence).length;
+        const no = rows.filter(r => !r.enuPresence).length;
+
+        const priorityCounts = rows.reduce((acc, row) => {
+          const level = getPriorityLevel(calculatePriorityScore(row));
+          acc[level] = (acc[level] || 0) + 1;
+          return acc;
+        }, { High: 0, Medium: 0, Low: 0 });
+
+        document.getElementById("k-permits").textContent = permits.toLocaleString();
+        document.getElementById("k-enu-yes").textContent = yes.toLocaleString();
+        document.getElementById("k-enu-no").textContent = no.toLocaleString();
+        document.getElementById("k-priority-high").textContent = priorityCounts.High.toLocaleString();
+        document.getElementById("k-priority-medium").textContent = priorityCounts.Medium.toLocaleString();
+        document.getElementById("k-priority-low").textContent = priorityCounts.Low.toLocaleString();
+      }
+
+      function renderAll() {
+        const rows = getFilteredPublicRows();
+        renderPresence(rows);
+        renderHeat(rows);
+        renderHotspots(rows);
+        renderGaps(rows);
+        renderPriority(rows);
+        renderKPIs(rows);
+        setDetails(null);
+      }
+
+      buildWardChips();
+      renderAll();
+
+      ["toggle-heat", "toggle-hotspots", "toggle-gaps", "toggle-priority"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener("change", renderAll);
+      });
+    })();
+
+    (function () {
+      const side = document.getElementById("sidepanel");
+      const btn = document.getElementById("panelToggle");
+
+      let backdrop = document.querySelector(".backdrop");
+      if (!backdrop) {
+        backdrop = document.createElement("div");
+        backdrop.className = "backdrop";
+        document.body.appendChild(backdrop);
+      }
+
+      function closePanel() {
+        side?.classList.remove("open");
+        btn?.setAttribute("aria-expanded", "false");
+        backdrop.classList.remove("show");
+        setTimeout(() => window.__enuMap && window.__enuMap.invalidateSize(), 200);
+      }
+
+      function openPanel() {
+        side?.classList.add("open");
+        btn?.setAttribute("aria-expanded", "true");
+        backdrop.classList.add("show");
+        setTimeout(() => window.__enuMap && window.__enuMap.invalidateSize(), 200);
+      }
+
+      btn?.addEventListener("click", () => {
+        side?.classList.contains("open") ? closePanel() : openPanel();
+      });
+
+      backdrop.addEventListener("click", closePanel);
+    })();
+  </script>
+</body>
+</html>
+this is the full replacement html please do the next steps with me... just give me the code that needs to be pasted exactly where... nothing more. 
