@@ -1,3 +1,4 @@
+// TEST: GitHub Desktop workflow working
 (function () {
   // Tear down any previous map on hot-reload
   if (window.__enuMap) { try { window.__enuMap.remove(); } catch (e) {} window.__enuMap = null; }
