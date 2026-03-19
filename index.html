@@ -68,26 +68,27 @@
       background:linear-gradient(180deg,#0f1730,#0b1020);
     }
 
-    .chip{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      padding:6px 10px;
-      font-size:12px;
-      border-radius:999px;
-      border:1px solid #1b2648;
-      background:#0e1530;
-      cursor:pointer;
-      user-select:none;
-    }
+   .chip {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(88,166,255,0.2);
+  border-radius: 999px;
+  padding: 6px 12px;
+  margin-right: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
 
-    .chip.active{
-      outline:2px solid var(--accent);
-    }
+.chip:hover {
+  background: rgba(88,166,255,0.15);
+  border-color: rgba(88,166,255,0.5);
+}
 
-    .chip.reset{
-      opacity:.9;
-    }
+.chip.active {
+  background: linear-gradient(145deg, #1b2a4a, #223764);
+  border-color: rgba(88,166,255,0.6);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
 
     aside{
       background:var(--card);
