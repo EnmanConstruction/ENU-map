@@ -306,7 +306,14 @@
   const hotspotLayer = L.layerGroup().addTo(map);
   const gapsLayer = L.layerGroup().addTo(map);
   const priorityLayer = L.layerGroup().addTo(map);
+  const interactionLayer = L.layerGroup().addTo(map);
   let heatLayer = null;
+
+  function markerHitRadius() {
+    const coarsePointer = window.matchMedia?.("(pointer: coarse)").matches;
+    if (map.getZoom() >= 13) return coarsePointer ? 22 : 18;
+    return coarsePointer ? 16 : 12;
+  }
 
   function selectNeighbourhood(row, { updateUrl = true } = {}) {
     if (!row) return;
@@ -332,28 +339,42 @@
 
   function renderPresence(rows) {
     presenceLayer.clearLayers();
+    interactionLayer.clearLayers();
 
     rows.forEach(d => {
       const isUnknown = d.enuPresence === null;
       const color = d.enuPresence === true ? "#0038A8" : d.enuPresence === false ? "#CE1126" : "#94a3b8";
       const presenceLabel = d.enuPresence === true ? "Yes" : d.enuPresence === false ? "No" : "Unknown";
-      const marker = L.circleMarker([d.lat, d.lng], {
-        radius: isUnknown ? 5 : d.enuPresence ? 11 : 10,
-        weight: isUnknown ? 1 : 2,
-        color,
-        fillColor: color,
-        fillOpacity: isUnknown ? 0.35 : 0.5
-      })
-      .bindPopup(`
+      const popupContent = `
         <div><strong>${escapeHtml(d.name)}</strong></div>
         <div><strong>ENU presence*:</strong> ${presenceLabel}</div>
         <div><strong>Active permits:</strong> ${d.permits.toLocaleString()}</div>
         <div><strong>Ward:</strong> ${escapeHtml(d.ward)}</div>
         <div><strong>Councillor:</strong> ${escapeHtml(d.councillor)}</div>
-      `)
+      `;
+      const marker = L.circleMarker([d.lat, d.lng], {
+        radius: isUnknown ? 5 : d.enuPresence ? 11 : 10,
+        weight: isUnknown ? 1 : 2,
+        color,
+        fillColor: color,
+        fillOpacity: isUnknown ? 0.35 : 0.5,
+        interactive: false
+      });
+
+      const hitTarget = L.circleMarker([d.lat, d.lng], {
+        radius: markerHitRadius(),
+        weight: 0,
+        color: "transparent",
+        fillColor: "#ffffff",
+        fillOpacity: 0.001,
+        className: "neighbourhood-hit-target"
+      })
+      .bindPopup(popupContent)
+      .bindTooltip(escapeHtml(d.name), { direction: "top", offset: [0, -10], opacity: 0.95 })
       .on("click", () => selectNeighbourhood(d));
 
       presenceLayer.addLayer(marker);
+      interactionLayer.addLayer(hitTarget);
     });
   }
 
@@ -520,6 +541,7 @@
     renderKPIs(rows);
     renderTopGrowth(rows);
     setDetails(null);
+    interactionLayer.eachLayer(layer => layer.bringToFront?.());
   }
 
   buildWardChips();
@@ -530,6 +552,11 @@
   ["toggle-heat", "toggle-hotspots", "toggle-gaps", "toggle-priority"].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener("change", renderAll);
+  });
+
+  map.on("zoomend", () => {
+    const radius = markerHitRadius();
+    interactionLayer.eachLayer(layer => layer.setRadius?.(radius));
   });
 })();
 

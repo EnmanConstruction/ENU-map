@@ -467,6 +467,10 @@
       touch-action:manipulation;
     }
 
+    .neighbourhood-hit-target{
+      cursor:pointer;
+    }
+
     .backdrop{
       position:fixed;
       inset:56px 0 0 0;
