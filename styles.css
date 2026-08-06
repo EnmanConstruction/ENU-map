@@ -202,32 +202,55 @@
     .growth-list small{display:block;color:#94a3b8;font-size:9px;font-weight:500}
     .growth-list strong{text-align:right;color:#fbbf24;font-size:12px}
 
-    .legend .row{
-      display:flex;
+    .legend h3{
+      margin:12px 0 7px;
+      color:#dbeafe;
+      font-size:11px;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+    }
+
+    .legend h3:first-child{margin-top:0}
+
+    .legend-item{
+      display:grid;
+      grid-template-columns:28px 1fr;
       align-items:center;
-      justify-content:space-between;
       gap:8px;
-      font-size:12px;
-      margin:6px 0;
+      min-height:25px;
+      color:#cbd5e1;
+      font-size:11px;
+      line-height:1.25;
     }
 
-    .swatch{
-      width:16px;
+    .heat-gradient{
+      width:26px;
       height:10px;
-      border-radius:2px;
-      display:inline-block;
-      margin-right:8px;
+      border:1px solid rgba(255,255,255,.55);
+      border-radius:999px;
+      background:linear-gradient(90deg,#2c7bb6,#00a6ca,#00ccbc,#90eb9d,#ffff8c,#f9d057,#f29e2e,#e76818,#d7191c);
     }
 
-    .swatch.hot{background:var(--hot)}
-    .swatch.warm{background:var(--warm)}
-    .swatch.cool{background:var(--cool)}
-    .swatch.enu-yes{background:var(--oilers-blue)}
-    .swatch.enu-no{background:var(--flames-red)}
-    .swatch.enu-unknown{background:var(--unknown)}
-    .swatch.priority-high{background:var(--priority-high)}
-    .swatch.priority-medium{background:var(--priority-medium)}
-    .swatch.priority-low{background:var(--priority-low)}
+    .dot,
+    .ring{
+      display:inline-block;
+      justify-self:center;
+      box-sizing:border-box;
+      border-radius:50%;
+    }
+
+    .dot.housing{background:#fbbf24;border:2px solid #fff}
+    .dot.housing.medium{width:10px;height:10px}
+    .dot.housing.high{width:15px;height:15px}
+    .dot.housing.very-high{width:20px;height:20px}
+    .dot.enu-yes{width:15px;height:15px;background:var(--oilers-blue);border:2px solid var(--oilers-blue)}
+    .dot.enu-no{width:15px;height:15px;background:var(--flames-red);border:2px solid var(--flames-red)}
+    .dot.enu-unknown{width:9px;height:9px;background:var(--unknown);border:1px solid var(--unknown)}
+    .ring{width:20px;height:20px;background:transparent;border:3px solid}
+    .ring.advocates{border:2px dashed var(--warm)}
+    .ring.priority-high{border-color:var(--priority-high)}
+    .ring.priority-medium{border-color:var(--priority-medium)}
+    .ring.priority-low{border-color:var(--priority-low)}
 
     #map{
       width:100%;

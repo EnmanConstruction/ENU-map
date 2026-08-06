@@ -92,9 +92,7 @@
   }
 
   function colorByHousingGrowth(n) {
-    if (n >= 100) return "#ef4444";
-    if (n >= 40) return "#f59e0b";
-    return "#22c55e";
+    return "#fbbf24";
   }
 
   function scaleIntensity(n) {
@@ -387,10 +385,10 @@
     rows.filter(d => d.infill >= 40).forEach(d => {
       const hotspot = L.circleMarker([d.lat, d.lng], {
         radius: Math.min(18, 8 + Math.log1p(d.infill) * 1.5),
-        weight: 1.5,
+        weight: 2,
         color: "#fff",
         fillColor: colorByHousingGrowth(d.infill),
-        fillOpacity: 0.85
+        fillOpacity: 0.82
       }).bindPopup(`
         <div style="display:flex;justify-content:space-between;gap:8px;">
           <strong>${escapeHtml(d.name)}</strong>
