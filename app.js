@@ -44,12 +44,12 @@
 
     if (result.source === "fallback") {
       dataStatus.classList.add("fallback");
-      dataStatus.textContent = "Demonstration data • Live sheet unavailable";
+      dataStatus.textContent = "City-backed snapshot • Live sheet not connected";
       dataStatus.title = result.error || "The live sheet could not be loaded.";
       return;
     }
 
-    dataStatus.textContent = "Demonstration data — not for official reporting";
+    dataStatus.textContent = "City-backed snapshot • ENU presence awaiting confirmation";
   }
 
   if (!window.ENUData || typeof window.ENUData.loadPublicData !== "function") {
@@ -80,9 +80,9 @@
     window.__enuMap.fitBounds(bounds.pad(0.2));
   }
 
-  function colorByInfill(n) {
-    if (n >= 140) return "#ef4444";
-    if (n >= 90) return "#f59e0b";
+  function colorByHousingGrowth(n) {
+    if (n >= 100) return "#ef4444";
+    if (n >= 40) return "#f59e0b";
     return "#22c55e";
   }
 
@@ -105,7 +105,7 @@
     const internal = getInternalByName(row.name);
 
     const permitScore = Math.min(row.permits / 25, 10);
-    const infillScore = Math.min(row.infill / 12, 10);
+    const housingGrowthScore = Math.min(Math.log1p(row.infill) / Math.log1p(250) * 10, 10);
     const noPresenceBonus = row.enuPresence ? 0 : 3;
 
     let engagementBonus = 0;
@@ -119,7 +119,7 @@
 
     const score =
       (permitScore * 0.4) +
-      (infillScore * 0.35) +
+      (housingGrowthScore * 0.35) +
       noPresenceBonus +
       engagementBonus;
 
@@ -170,8 +170,6 @@
   ? "O-day'min Ward"
   : ward === "papastew"
   ? "papastew Ward"
-  : ward === "(mock)"
-  ? "Demo Ward"
   : ward;
       chip.addEventListener("click", () => {
         state.filters.ward = ward;
@@ -213,7 +211,7 @@
       </div>
 
       <div class="row"><span>Active permits</span><strong>${row.permits.toLocaleString()}</strong></div>
-      <div class="row"><span>Infill permits</span><strong>${row.infill.toLocaleString()}</strong></div>
+      <div class="row"><span>New-home permits (24 mo.)</span><strong>${row.infill.toLocaleString()}</strong></div>
       <div class="row"><span>Priority score</span><strong>${score}</strong></div>
       <div class="row"><span>Councillor</span><strong>${escapeHtml(row.councillor)}</strong></div>
 
@@ -304,19 +302,19 @@
     const toggle = document.getElementById("toggle-hotspots");
     hotspotLayer.clearLayers();
 
-    rows.filter(d => d.infill >= 90).forEach(d => {
+    rows.filter(d => d.infill >= 40).forEach(d => {
       const hotspot = L.circleMarker([d.lat, d.lng], {
-        radius: Math.min(18, 8 + d.infill / 15),
+        radius: Math.min(18, 8 + Math.log1p(d.infill) * 1.5),
         weight: 1.5,
         color: "#fff",
-        fillColor: colorByInfill(d.infill),
+        fillColor: colorByHousingGrowth(d.infill),
         fillOpacity: 0.85
       }).bindPopup(`
         <div style="display:flex;justify-content:space-between;gap:8px;">
           <strong>${escapeHtml(d.name)}</strong>
-          <span style="font-size:11px;border:1px solid #1b2648;padding:2px 6px;border-radius:999px;">Infill hotspot</span>
+          <span style="font-size:11px;border:1px solid #1b2648;padding:2px 6px;border-radius:999px;">Housing-growth hotspot</span>
         </div>
-        <div>Infill-type permits: <strong>${d.infill.toLocaleString()}</strong></div>
+        <div>New-home permits, trailing 24 months: <strong>${d.infill.toLocaleString()}</strong></div>
       `);
 
       hotspotLayer.addLayer(hotspot);
@@ -334,7 +332,7 @@
     gapsLayer.clearLayers();
 
     rows
-      .filter(d => ((d.permits >= 90 && d.infill < 60) || (!d.enuPresence && d.permits >= 80)))
+      .filter(d => ((d.permits >= 40 && d.infill < 20) || (!d.enuPresence && d.permits >= 40)))
       .forEach(d => {
         const gap = L.circleMarker([d.lat, d.lng], {
           radius: 10,
@@ -346,7 +344,7 @@
         }).bindPopup(`
           <div><strong>${escapeHtml(d.name)}</strong></div>
           <div><strong>Needs local advocates</strong></div>
-          <div>Permits: <strong>${d.permits.toLocaleString()}</strong>, Infill: <strong>${d.infill.toLocaleString()}</strong></div>
+          <div>Active permits: <strong>${d.permits.toLocaleString()}</strong>, new-home permits: <strong>${d.infill.toLocaleString()}</strong></div>
         `);
 
         gapsLayer.addLayer(gap);

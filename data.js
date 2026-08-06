@@ -1,20 +1,17 @@
 const FALLBACK_PUBLIC_DATA = [
-  { name:"Oliver",      lat:53.544,  lng:-113.516, permits:210, infill:120, enuPresence:true,  ward:"O-day'min", councillor:"TBD", leader:"", leaderEmail:"", notes:"" },
-  { name:"Downtown",    lat:53.545,  lng:-113.495, permits:260, infill: 80, enuPresence:true,  ward:"O-day'min", councillor:"TBD", leader:"", leaderEmail:"", notes:"" },
-  { name:"Strathcona",  lat:53.522,  lng:-113.501, permits:180, infill:110, enuPresence:true,  ward:"papastew",  councillor:"TBD", leader:"", leaderEmail:"", notes:"" },
-  { name:"Westmount",   lat:53.554,  lng:-113.543, permits:120, infill: 85, enuPresence:false, ward:"O-day'min", councillor:"TBD", leader:"", leaderEmail:"", notes:"" },
-  { name:"Garneau",     lat:53.5225, lng:-113.520, permits:140, infill: 70, enuPresence:false, ward:"papastew",  councillor:"TBD", leader:"", leaderEmail:"", notes:"" },
-  { name:"Glenora",     lat:53.553,  lng:-113.566, permits: 90, infill: 60, enuPresence:false, ward:"O-day'min", councillor:"TBD", leader:"", leaderEmail:"", notes:"" },
-  { name:"Ritchie",     lat:53.512,  lng:-113.485, permits:100, infill: 75, enuPresence:true,  ward:"papastew",  councillor:"TBD", leader:"", leaderEmail:"", notes:"" },
-  { name:"Highlands",   lat:53.569,  lng:-113.429, permits: 80, infill: 50, enuPresence:false, ward:"(mock)",    councillor:"TBD", leader:"", leaderEmail:"", notes:"" },
-  { name:"Bonnie Doon", lat:53.526,  lng:-113.468, permits: 95, infill: 55, enuPresence:false, ward:"papastew",  councillor:"TBD", leader:"", leaderEmail:"", notes:"" },
-  { name:"Keswick",     lat:53.415,  lng:-113.622, permits: 60, infill: 15, enuPresence:false, ward:"(mock)",    councillor:"TBD", leader:"", leaderEmail:"", notes:"" },
-  { name:"Windermere",  lat:53.431,  lng:-113.627, permits: 70, infill: 20, enuPresence:false, ward:"(mock)",    councillor:"TBD", leader:"", leaderEmail:"", notes:"" },
-  { name:"Laurel",      lat:53.448,  lng:-113.377, permits: 85, infill: 18, enuPresence:false, ward:"(mock)",    councillor:"TBD", leader:"", leaderEmail:"", notes:"" }
+  { name:"Wîhkwêntôwin", lat:53.541983, lng:-113.523994, permits:34,  infill:1,   enuPresence:true,  ward:"O-day'min",   councillor:"Anne Stevenson", leader:"", leaderEmail:"", notes:"" },
+  { name:"Downtown",     lat:53.539767, lng:-113.499421, permits:126, infill:0,   enuPresence:true,  ward:"O-day'min",   councillor:"Anne Stevenson", leader:"", leaderEmail:"", notes:"" },
+  { name:"Strathcona",   lat:53.522390, lng:-113.490986, permits:48,  infill:19,  enuPresence:true,  ward:"papastew",    councillor:"Michael Janz", leader:"", leaderEmail:"", notes:"" },
+  { name:"Westmount",    lat:53.549995, lng:-113.539976, permits:41,  infill:37,  enuPresence:false, ward:"O-day'min",   councillor:"Anne Stevenson", leader:"", leaderEmail:"", notes:"" },
+  { name:"Garneau",      lat:53.519911, lng:-113.513536, permits:27,  infill:9,   enuPresence:false, ward:"papastew",    councillor:"Michael Janz", leader:"", leaderEmail:"", notes:"" },
+  { name:"Glenora",      lat:53.544905, lng:-113.557043, permits:21,  infill:58,  enuPresence:false, ward:"Nakota Isga", councillor:"Reed Clarke", leader:"", leaderEmail:"", notes:"" },
+  { name:"Ritchie",      lat:53.513275, lng:-113.482742, permits:22,  infill:32,  enuPresence:true,  ward:"papastew",    councillor:"Michael Janz", leader:"", leaderEmail:"", notes:"" },
+  { name:"Highlands",    lat:53.565999, lng:-113.430171, permits:6,   infill:20,  enuPresence:false, ward:"Métis",       councillor:"Ashley Salvador", leader:"", leaderEmail:"", notes:"" },
+  { name:"Bonnie Doon",  lat:53.525337, lng:-113.467111, permits:12,  infill:45,  enuPresence:false, ward:"Métis",       councillor:"Ashley Salvador", leader:"", leaderEmail:"", notes:"" },
+  { name:"Keswick",      lat:53.417587, lng:-113.632212, permits:20,  infill:710, enuPresence:false, ward:"pihêsiwin",   councillor:"Mike Elliott", leader:"", leaderEmail:"", notes:"" },
+  { name:"Windermere",   lat:53.432342, lng:-113.626688, permits:12,  infill:40,  enuPresence:false, ward:"pihêsiwin",   councillor:"Mike Elliott", leader:"", leaderEmail:"", notes:"" },
+  { name:"Laurel",       lat:53.445799, lng:-113.381470, permits:11,  infill:10,  enuPresence:false, ward:"Sspomitapi",   councillor:"Jo-Anne Wright", leader:"", leaderEmail:"", notes:"" }
 ];
 
-const FALLBACK_INTERNAL_DATA = [
-  { name:"Oliver", volunteers:4, lawnSigns:12, petitionSignatures:34, engagementScore:8, priorityLevel:"High", notes:"Strong support base" },
-  { name:"Westmount", volunteers:1, lawnSigns:2, petitionSignatures:5, engagementScore:3, priorityLevel:"Medium", notes:"Needs more support" },
-  { name:"Garneau", volunteers:0, lawnSigns:0, petitionSignatures:2, engagementScore:2, priorityLevel:"High", notes:"Pressure area, weak engagement" }
-];
+// The public site intentionally contains no volunteer, petition, or strategy data.
+const FALLBACK_INTERNAL_DATA = [];
