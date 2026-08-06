@@ -104,6 +104,18 @@
       text-transform:uppercase;
     }
 
+    .demo-badge.live{
+      color:#bbf7d0;
+      background:rgba(34,197,94,.12);
+      border-color:rgba(34,197,94,.5);
+    }
+
+    .demo-badge.fallback{
+      color:#fed7aa;
+      background:rgba(249,115,22,.12);
+      border-color:rgba(249,115,22,.5);
+    }
+
     aside{
       background:var(--card);
       border-right:1px solid #1b2648;

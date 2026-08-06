@@ -15,7 +15,7 @@
       <div>
         <h1>Edmonton Neighbourhoods United — Citywide Strategic Densification Map</h1>
         <div class="meta">Strategic View • Densification Pressure • ENU Coverage • Action Priorities</div>
-        <div class="demo-badge">Demonstration data — not for official reporting</div>
+        <div id="dataStatus" class="demo-badge" role="status">Loading map data…</div>
       </div>
       <button id="panelToggle" class="hamburger" aria-expanded="false" aria-controls="sidepanel">☰</button>
     </header>
@@ -67,7 +67,9 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 
+  <script src="config.js"></script>
   <script src="data.js"></script>
+  <script src="data-loader.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

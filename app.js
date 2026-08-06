@@ -1,5 +1,6 @@
-(function () {
+(async function () {
   const statusBox = document.getElementById("mapStatus");
+  const dataStatus = document.getElementById("dataStatus");
 
   function showMapError(message) {
     if (!statusBox) return;
@@ -17,10 +18,52 @@
     window.__enuMap = null;
   }
 
+  function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, character => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    })[character]);
+  }
+
+  function updateDataStatus(result) {
+    if (!dataStatus) return;
+    dataStatus.classList.remove("live", "fallback");
+
+    if (result.source === "live") {
+      dataStatus.classList.add("live");
+      const date = result.updatedAt instanceof Date && !Number.isNaN(result.updatedAt.valueOf())
+        ? result.updatedAt.toLocaleDateString("en-CA", { year: "numeric", month: "short", day: "numeric" })
+        : "today";
+      dataStatus.textContent = `Live public data • Updated ${date}`;
+      if (result.issues.length) dataStatus.title = `${result.issues.length} invalid sheet row(s) were skipped.`;
+      return;
+    }
+
+    if (result.source === "fallback") {
+      dataStatus.classList.add("fallback");
+      dataStatus.textContent = "Demonstration data • Live sheet unavailable";
+      dataStatus.title = result.error || "The live sheet could not be loaded.";
+      return;
+    }
+
+    dataStatus.textContent = "Demonstration data — not for official reporting";
+  }
+
+  if (!window.ENUData || typeof window.ENUData.loadPublicData !== "function") {
+    showMapError("The map data tools could not load. Please refresh the page.");
+    return;
+  }
+
+  const publicDataResult = await window.ENUData.loadPublicData(window.ENU_DATA_CONFIG || {}, FALLBACK_PUBLIC_DATA);
+  updateDataStatus(publicDataResult);
+
   const state = {
     filters: { ward: null },
     datasets: {
-      publicMap: FALLBACK_PUBLIC_DATA,
+      publicMap: publicDataResult.rows,
       internalStrategy: FALLBACK_INTERNAL_DATA
     }
   };
@@ -162,21 +205,21 @@
     box.classList.remove("hidden");
     box.innerHTML = `
       <button class="details-close" type="button" aria-label="Close neighbourhood details">×</button>
-      <h3>${row.name}</h3>
+      <h3>${escapeHtml(row.name)}</h3>
       <div style="display:flex; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
         <span class="badge ${row.enuPresence ? "yes" : "no"}">${row.enuPresence ? "ENU Presence: Yes" : "ENU Presence: No"}</span>
-        <span class="badge">Ward: ${row.ward}</span>
+        <span class="badge">Ward: ${escapeHtml(row.ward)}</span>
         <span class="badge priority-${priority.toLowerCase()}">Priority: ${priority}</span>
       </div>
 
       <div class="row"><span>Active permits</span><strong>${row.permits.toLocaleString()}</strong></div>
       <div class="row"><span>Infill permits</span><strong>${row.infill.toLocaleString()}</strong></div>
       <div class="row"><span>Priority score</span><strong>${score}</strong></div>
-      <div class="row"><span>Councillor</span><strong>${row.councillor}</strong></div>
+      <div class="row"><span>Councillor</span><strong>${escapeHtml(row.councillor)}</strong></div>
 
-      ${row.leader ? `<div class="row"><span>ENU leader</span><strong>${row.leader}</strong></div>` : ""}
-      ${row.leaderEmail ? `<div class="row"><span>Leader email</span><strong>${row.leaderEmail}</strong></div>` : ""}
-      ${row.notes ? `<div class="row"><span>Public notes</span><strong>${row.notes}</strong></div>` : ""}
+      ${row.leader ? `<div class="row"><span>ENU leader</span><strong>${escapeHtml(row.leader)}</strong></div>` : ""}
+      ${row.leaderEmail ? `<div class="row"><span>Leader email</span><strong>${escapeHtml(row.leaderEmail)}</strong></div>` : ""}
+      ${row.notes ? `<div class="row"><span>Public notes</span><strong>${escapeHtml(row.notes)}</strong></div>` : ""}
 
       ${internal ? `
         <hr style="border-color:#1b2648; margin:10px 0;">
@@ -184,8 +227,8 @@
         <div class="row"><span>Lawn signs</span><strong>${internal.lawnSigns}</strong></div>
         <div class="row"><span>Petition signatures</span><strong>${internal.petitionSignatures}</strong></div>
         <div class="row"><span>Engagement score</span><strong>${internal.engagementScore}</strong></div>
-        <div class="row"><span>Priority level (manual)</span><strong>${internal.priorityLevel || "-"}</strong></div>
-        ${internal.notes ? `<div class="row"><span>Internal notes</span><strong>${internal.notes}</strong></div>` : ""}
+        <div class="row"><span>Priority level (manual)</span><strong>${escapeHtml(internal.priorityLevel || "-")}</strong></div>
+        ${internal.notes ? `<div class="row"><span>Internal notes</span><strong>${escapeHtml(internal.notes)}</strong></div>` : ""}
       ` : ""}
     `;
 
@@ -224,11 +267,11 @@
         fillOpacity: 0.5
       })
       .bindPopup(`
-        <div><strong>${d.name}</strong></div>
+        <div><strong>${escapeHtml(d.name)}</strong></div>
         <div><strong>ENU presence:</strong> ${d.enuPresence ? "Yes" : "No"}</div>
         <div><strong>Active permits:</strong> ${d.permits.toLocaleString()}</div>
-        <div><strong>Ward:</strong> ${d.ward}</div>
-        <div><strong>Councillor:</strong> ${d.councillor}</div>
+        <div><strong>Ward:</strong> ${escapeHtml(d.ward)}</div>
+        <div><strong>Councillor:</strong> ${escapeHtml(d.councillor)}</div>
       `)
       .on("click", () => setDetails(d));
 
@@ -270,7 +313,7 @@
         fillOpacity: 0.85
       }).bindPopup(`
         <div style="display:flex;justify-content:space-between;gap:8px;">
-          <strong>${d.name}</strong>
+          <strong>${escapeHtml(d.name)}</strong>
           <span style="font-size:11px;border:1px solid #1b2648;padding:2px 6px;border-radius:999px;">Infill hotspot</span>
         </div>
         <div>Infill-type permits: <strong>${d.infill.toLocaleString()}</strong></div>
@@ -301,7 +344,7 @@
           fillColor: "#f59e0b",
           fillOpacity: 0.25
         }).bindPopup(`
-          <div><strong>${d.name}</strong></div>
+          <div><strong>${escapeHtml(d.name)}</strong></div>
           <div><strong>Needs local advocates</strong></div>
           <div>Permits: <strong>${d.permits.toLocaleString()}</strong>, Infill: <strong>${d.infill.toLocaleString()}</strong></div>
         `);
@@ -331,7 +374,7 @@
         fillColor: priorityColor(level),
         fillOpacity: 0.15
       }).bindPopup(`
-        <div><strong>${d.name}</strong></div>
+        <div><strong>${escapeHtml(d.name)}</strong></div>
         <div><strong>Priority:</strong> ${level}</div>
         <div><strong>Priority score:</strong> ${score}</div>
       `);
