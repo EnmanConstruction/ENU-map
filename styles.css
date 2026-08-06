@@ -201,6 +201,42 @@
       margin:8px 0;
     }
 
+    .provisional-note,
+    .source-note{
+      margin:10px 0 0;
+      color:#aebbd3;
+      font-size:11px;
+      line-height:1.45;
+    }
+
+    .methodology-panel details{
+      color:#dbeafe;
+    }
+
+    .methodology-panel summary{
+      cursor:pointer;
+      font-size:14px;
+      font-weight:700;
+      list-style-position:outside;
+    }
+
+    .methodology-panel summary:focus-visible{
+      outline:3px solid rgba(88,166,255,.75);
+      outline-offset:4px;
+      border-radius:4px;
+    }
+
+    .methodology-copy{
+      padding-top:6px;
+      color:#cbd5e1;
+      font-size:12px;
+      line-height:1.45;
+    }
+
+    .methodology-copy p{
+      margin:8px 0;
+    }
+
     .leaflet-container a{
       color:#9fb0ce;
     }

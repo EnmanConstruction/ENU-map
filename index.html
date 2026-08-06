@@ -13,8 +13,8 @@
   <div id="app">
     <header>
       <div>
-        <h1>Edmonton Neighbourhoods United — Citywide Strategic Densification Map</h1>
-        <div class="meta">Strategic View • Densification Pressure • ENU Coverage • Action Priorities</div>
+        <h1>Edmonton Neighbourhoods United — Growth & Advocacy Map</h1>
+        <div class="meta">Development Activity • Housing Growth • ENU Coverage • Action Priorities</div>
         <div id="dataStatus" class="demo-badge" role="status">Loading map data…</div>
       </div>
       <button id="panelToggle" class="hamburger" aria-expanded="false" aria-controls="sidepanel">☰</button>
@@ -24,20 +24,21 @@
 
  <aside id="sidepanel">
   <div class="panel">
-    <h2>City Pressure Snapshot</h2>
+    <h2>Neighbourhood Snapshot</h2>
     <div class="kpi">
       <div class="k"><div class="n" id="k-permits">–</div><div class="l">Dev. permits</div></div>
-      <div class="k blue"><div class="n" id="k-enu-yes">–</div><div class="l">ENU Presence (Yes)</div></div>
-      <div class="k red"><div class="n" id="k-enu-no">–</div><div class="l">ENU Presence (No)</div></div>
+      <div class="k blue"><div class="n" id="k-enu-yes">–</div><div class="l">ENU Presence* (Yes)</div></div>
+      <div class="k red"><div class="n" id="k-enu-no">–</div><div class="l">ENU Presence* (No)</div></div>
       <div class="k high"><div class="n" id="k-priority-high">–</div><div class="l">High Priority</div></div>
       <div class="k medium"><div class="n" id="k-priority-medium">–</div><div class="l">Medium Priority</div></div>
       <div class="k low"><div class="n" id="k-priority-low">–</div><div class="l">Low Priority</div></div>
     </div>
+    <p class="provisional-note">* ENU presence is provisional while neighbourhood records are being confirmed.</p>
   </div>
 
   <div class="panel">
     <h2>Layers</h2>
-    <label class="toggle"><input id="toggle-heat" type="checkbox" checked /> Densification heatmap</label>
+    <label class="toggle"><input id="toggle-heat" type="checkbox" checked /> Active development heatmap</label>
     <label class="toggle"><input id="toggle-hotspots" type="checkbox" checked /> Housing-growth hotspots (24 mo.)</label>
     <label class="toggle"><input id="toggle-gaps" type="checkbox" checked /> Areas needing local advocates</label>
     <label class="toggle"><input id="toggle-priority" type="checkbox" checked /> Strategic priority layer</label>
@@ -55,6 +56,18 @@
       <div class="row"><span><span class="swatch priority-medium"></span> Strategic priority: Medium</span></div>
       <div class="row"><span><span class="swatch priority-low"></span> Strategic priority: Low</span></div>
     </div>
+  </div>
+
+  <div class="panel methodology-panel">
+    <details>
+      <summary>About this data</summary>
+      <div class="methodology-copy">
+        <p><strong>Active development</strong> counts City development-permit records currently marked In Progress.</p>
+        <p><strong>Housing growth</strong> counts new-building permits adding at least one home during the trailing 24 months.</p>
+        <p><strong>ENU presence</strong> is maintained by ENU and is provisional until the current review is complete.</p>
+        <p class="source-note">City permit snapshot assembled August 6, 2026. The status badge above shows whether the map is using its verified snapshot or a connected live sheet.</p>
+      </div>
+    </details>
   </div>
 </aside>
 

@@ -12,6 +12,3 @@ const FALLBACK_PUBLIC_DATA = [
   { name:"Windermere",   lat:53.432342, lng:-113.626688, permits:12,  infill:40,  enuPresence:false, ward:"pihêsiwin",   councillor:"Mike Elliott", leader:"", leaderEmail:"", notes:"" },
   { name:"Laurel",       lat:53.445799, lng:-113.381470, permits:11,  infill:10,  enuPresence:false, ward:"Sspomitapi",   councillor:"Jo-Anne Wright", leader:"", leaderEmail:"", notes:"" }
 ];
-
-// The public site intentionally contains no volunteer, petition, or strategy data.
-const FALLBACK_INTERNAL_DATA = [];

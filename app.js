@@ -63,8 +63,7 @@
   const state = {
     filters: { ward: null },
     datasets: {
-      publicMap: publicDataResult.rows,
-      internalStrategy: FALLBACK_INTERNAL_DATA
+      publicMap: publicDataResult.rows
     }
   };
 
@@ -97,31 +96,17 @@
     return rows.filter(d => d.ward === state.filters.ward);
   }
 
-  function getInternalByName(name) {
-    return state.datasets.internalStrategy.find(d => d.name === name) || null;
-  }
-
   function calculatePriorityScore(row) {
-    const internal = getInternalByName(row.name);
-
     const permitScore = Math.min(row.permits / 25, 10);
     const housingGrowthScore = Math.min(Math.log1p(row.infill) / Math.log1p(250) * 10, 10);
     const noPresenceBonus = row.enuPresence ? 0 : 3;
-
-    let engagementBonus = 0;
-    if (internal) {
-      if (internal.engagementScore <= 2) engagementBonus = 3;
-      else if (internal.engagementScore <= 4) engagementBonus = 2;
-      else if (internal.engagementScore <= 6) engagementBonus = 1;
-    } else {
-      engagementBonus = 1.5;
-    }
+    const baselineAdvocacyNeed = 1.5;
 
     const score =
       (permitScore * 0.4) +
       (housingGrowthScore * 0.35) +
       noPresenceBonus +
-      engagementBonus;
+      baselineAdvocacyNeed;
 
     return Number(score.toFixed(2));
   }
@@ -196,7 +181,6 @@
       return;
     }
 
-    const internal = getInternalByName(row.name);
     const score = calculatePriorityScore(row);
     const priority = getPriorityLevel(score);
 
@@ -205,7 +189,7 @@
       <button class="details-close" type="button" aria-label="Close neighbourhood details">×</button>
       <h3>${escapeHtml(row.name)}</h3>
       <div style="display:flex; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
-        <span class="badge ${row.enuPresence ? "yes" : "no"}">${row.enuPresence ? "ENU Presence: Yes" : "ENU Presence: No"}</span>
+        <span class="badge ${row.enuPresence ? "yes" : "no"}">${row.enuPresence ? "ENU Presence*: Yes" : "ENU Presence*: No"}</span>
         <span class="badge">Ward: ${escapeHtml(row.ward)}</span>
         <span class="badge priority-${priority.toLowerCase()}">Priority: ${priority}</span>
       </div>
@@ -218,16 +202,7 @@
       ${row.leader ? `<div class="row"><span>ENU leader</span><strong>${escapeHtml(row.leader)}</strong></div>` : ""}
       ${row.leaderEmail ? `<div class="row"><span>Leader email</span><strong>${escapeHtml(row.leaderEmail)}</strong></div>` : ""}
       ${row.notes ? `<div class="row"><span>Public notes</span><strong>${escapeHtml(row.notes)}</strong></div>` : ""}
-
-      ${internal ? `
-        <hr style="border-color:#1b2648; margin:10px 0;">
-        <div class="row"><span>Volunteers</span><strong>${internal.volunteers}</strong></div>
-        <div class="row"><span>Lawn signs</span><strong>${internal.lawnSigns}</strong></div>
-        <div class="row"><span>Petition signatures</span><strong>${internal.petitionSignatures}</strong></div>
-        <div class="row"><span>Engagement score</span><strong>${internal.engagementScore}</strong></div>
-        <div class="row"><span>Priority level (manual)</span><strong>${escapeHtml(internal.priorityLevel || "-")}</strong></div>
-        ${internal.notes ? `<div class="row"><span>Internal notes</span><strong>${escapeHtml(internal.notes)}</strong></div>` : ""}
-      ` : ""}
+      <p class="provisional-note">* ENU presence is provisional pending confirmation.</p>
     `;
 
     box.querySelector(".details-close")?.addEventListener("click", () => setDetails(null));
@@ -266,7 +241,7 @@
       })
       .bindPopup(`
         <div><strong>${escapeHtml(d.name)}</strong></div>
-        <div><strong>ENU presence:</strong> ${d.enuPresence ? "Yes" : "No"}</div>
+        <div><strong>ENU presence*:</strong> ${d.enuPresence ? "Yes" : "No"}</div>
         <div><strong>Active permits:</strong> ${d.permits.toLocaleString()}</div>
         <div><strong>Ward:</strong> ${escapeHtml(d.ward)}</div>
         <div><strong>Councillor:</strong> ${escapeHtml(d.councillor)}</div>
