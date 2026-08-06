@@ -23,11 +23,12 @@
     }
 
     html, body {
-  margin: 0;
-  font-family: system-ui, -apple-system, sans-serif;
-  background: radial-gradient(circle at top left, #0f172a, #020617 70%);
-  color: white;
-}
+      height:100%;
+      margin:0;
+      font-family:system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:radial-gradient(circle at top left, #0f172a, #020617 70%);
+      color:white;
+    }
 
     #app{
       display:grid;
@@ -67,27 +68,51 @@
       background:linear-gradient(180deg,#0f1730,#0b1020);
     }
 
-   .chip {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(88,166,255,0.2);
-  border-radius: 999px;
-  padding: 6px 12px;
-  margin-right: 8px;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
+    .chip{
+      appearance:none;
+      color:inherit;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(88,166,255,.2);
+      border-radius:999px;
+      padding:6px 12px;
+      font:inherit;
+      font-size:13px;
+      cursor:pointer;
+      transition:background .2s ease, border-color .2s ease, box-shadow .2s ease;
+    }
 
-.chip:hover {
-  background: rgba(59,130,246,0.2);
-  border-color: rgba(59,130,246,0.6);
-}
+    .chip:hover{
+      background:rgba(59,130,246,.2);
+      border-color:rgba(59,130,246,.6);
+    }
 
-.chip.active {
-  background: linear-gradient(145deg, #1b2a4a, #223764);
-  border-color: rgba(88,166,255,0.6);
-  box-shadow: 0 0 12px rgba(59,130,246,0.45);
-}
+    .chip:focus-visible,
+    .hamburger:focus-visible,
+    .details-close:focus-visible{
+      outline:3px solid rgba(88,166,255,.75);
+      outline-offset:2px;
+    }
+
+    .chip.active{
+      background:linear-gradient(145deg,#1b2a4a,#223764);
+      border-color:rgba(88,166,255,.6);
+      box-shadow:0 0 12px rgba(59,130,246,.45);
+    }
+
+    .demo-badge{
+      display:inline-flex;
+      align-items:center;
+      margin-top:5px;
+      padding:3px 8px;
+      color:#fde68a;
+      background:rgba(245,158,11,.12);
+      border:1px solid rgba(245,158,11,.45);
+      border-radius:999px;
+      font-size:11px;
+      font-weight:700;
+      letter-spacing:.04em;
+      text-transform:uppercase;
+    }
 
     aside{
       background:var(--card);
@@ -149,12 +174,11 @@
     }
 
     .k{
-  background:#0e1530;
-  border:1px solid #1b2648;
-  border-radius:12px;
-  padding:8px;
-  text-align:center;
-}
+      background:#0e1530;
+      border:1px solid #1b2648;
+      border-radius:12px;
+      padding:8px;
+      text-align:center;
     }
 
     .k .n{
@@ -200,6 +224,39 @@
     .details h3{
       margin:0 0 8px 0;
       font-size:16px;
+    }
+
+    .details-close{
+      position:absolute;
+      top:8px;
+      right:8px;
+      width:30px;
+      height:30px;
+      color:#dbeafe;
+      background:rgba(255,255,255,.04);
+      border:1px solid #1b2648;
+      border-radius:8px;
+      cursor:pointer;
+    }
+
+    .map-status{
+      position:fixed;
+      left:50%;
+      bottom:18px;
+      transform:translateX(-50%);
+      z-index:1300;
+      max-width:min(520px,calc(100vw - 32px));
+      padding:10px 14px;
+      color:#fee2e2;
+      background:#450a0a;
+      border:1px solid #ef4444;
+      border-radius:10px;
+      box-shadow:0 10px 30px rgba(0,0,0,.4);
+      font-size:13px;
+    }
+
+    .map-status.hidden{
+      display:none;
     }
 
     .badge{
@@ -305,11 +362,8 @@
       }
 
       #map{
-     #map {
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.45);
-}
+        min-height:500px;
+      }
 
       .kpi{
         grid-template-columns:repeat(2,1fr);
@@ -330,6 +384,7 @@
       <div>
         <h1>Edmonton Neighbourhoods United — Citywide Strategic Densification Map</h1>
         <div class="meta">Strategic View • Densification Pressure • ENU Coverage • Action Priorities</div>
+        <div class="demo-badge">Demonstration data — not for official reporting</div>
       </div>
       <button id="panelToggle" class="hamburger" aria-expanded="false" aria-controls="sidepanel">☰</button>
     </header>
@@ -376,12 +431,26 @@
   </div>
 
   <div id="details" class="details hidden" role="region" aria-live="polite"></div>
+  <div id="mapStatus" class="map-status hidden" role="alert"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 
   <script>
     (function () {
+      const statusBox = document.getElementById("mapStatus");
+
+      function showMapError(message) {
+        if (!statusBox) return;
+        statusBox.textContent = message;
+        statusBox.classList.remove("hidden");
+      }
+
+      if (!window.L || typeof window.L.map !== "function" || typeof window.L.heatLayer !== "function") {
+        showMapError("The interactive map could not load. Please check your connection and refresh the page.");
+        return;
+      }
+
       if (window.__enuMap) {
         try { window.__enuMap.remove(); } catch (e) {}
         window.__enuMap = null;
@@ -492,20 +561,28 @@
 
         bar.innerHTML = "";
 
-        const allChip = document.createElement("span");
+        const allChip = document.createElement("button");
+        allChip.type = "button";
         allChip.className = "chip reset active";
+        allChip.setAttribute("aria-pressed", "true");
         allChip.textContent = "All Wards";
         allChip.addEventListener("click", () => {
           state.filters.ward = null;
-          document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+          document.querySelectorAll(".chip").forEach(c => {
+            c.classList.remove("active");
+            c.setAttribute("aria-pressed", "false");
+          });
           allChip.classList.add("active");
+          allChip.setAttribute("aria-pressed", "true");
           renderAll();
         });
         bar.appendChild(allChip);
 
         uniqueWards(state.datasets.publicMap).forEach(ward => {
-          const chip = document.createElement("span");
+          const chip = document.createElement("button");
+          chip.type = "button";
           chip.className = "chip";
+          chip.setAttribute("aria-pressed", "false");
           chip.textContent = ward === "O-day'min"
   ? "O-day'min Ward"
   : ward === "papastew"
@@ -515,8 +592,12 @@
   : ward;
           chip.addEventListener("click", () => {
             state.filters.ward = ward;
-            document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+            document.querySelectorAll(".chip").forEach(c => {
+              c.classList.remove("active");
+              c.setAttribute("aria-pressed", "false");
+            });
             chip.classList.add("active");
+            chip.setAttribute("aria-pressed", "true");
             renderAll();
             fitToWard(ward);
           });
@@ -540,6 +621,7 @@
 
         box.classList.remove("hidden");
         box.innerHTML = `
+          <button class="details-close" type="button" aria-label="Close neighbourhood details">×</button>
           <h3>${row.name}</h3>
           <div style="display:flex; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
             <span class="badge ${row.enuPresence ? "yes" : "no"}">${row.enuPresence ? "ENU Presence: Yes" : "ENU Presence: No"}</span>
@@ -566,6 +648,8 @@
             ${internal.notes ? `<div class="row"><span>Internal notes</span><strong>${internal.notes}</strong></div>` : ""}
           ` : ""}
         `;
+
+        box.querySelector(".details-close")?.addEventListener("click", () => setDetails(null));
       }
 
       const map = L.map("map", {
@@ -795,4 +879,3 @@
   </script>
 </body>
 </html>
-this is the full replacement html please do the next steps with me... just give me the code that needs to be pasted exactly where... nothing more. 

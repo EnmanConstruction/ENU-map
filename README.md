@@ -2,6 +2,8 @@
 
 Static micro‑app for Edmonton Neighbourhoods United.
 
+> Current status: stabilized demonstration using sample data. Figures shown in the app are not yet connected to an official ENU data source.
+
 ## MVP features
 - ENU presence per neighbourhood (Oilers blue = Yes, Flames red = No)
 - Active development permits (mocked for now)
@@ -10,10 +12,13 @@ Static micro‑app for Edmonton Neighbourhoods United.
 - KPIs aligned to the colors
 
 ## Local preview
-Open `index.html` in your browser.
+Run `npm run build`, then serve the generated `dist/` directory with a local web server.
 
 ## Deploy to Vercel
 1. Create a new project at https://vercel.com/new
 2. Import this folder (or push to GitHub then import).
-3. Framework: **Other** (static). Build command: *(none)*. Output: `/`.
+3. Framework: **Other** (static). Build command: `npm run build`. Output: `dist`.
 4. Deploy and use the URL in Squarespace via an iframe.
+
+## Production path
+Pushes merged to `main` deploy automatically to the existing Vercel project and production alias.
