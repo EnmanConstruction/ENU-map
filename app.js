@@ -97,9 +97,10 @@
   }
 
   function calculatePriorityScore(row) {
+    if (row.enuPresence === null) return null;
     const permitScore = Math.min(row.permits / 25, 10);
     const housingGrowthScore = Math.min(Math.log1p(row.infill) / Math.log1p(250) * 10, 10);
-    const noPresenceBonus = row.enuPresence ? 0 : 3;
+    const noPresenceBonus = row.enuPresence === false ? 3 : 0;
     const baselineAdvocacyNeed = 1.5;
 
     const score =
@@ -112,6 +113,7 @@
   }
 
   function getPriorityLevel(score) {
+    if (score === null) return "Unknown";
     if (score >= 7.5) return "High";
     if (score >= 4.5) return "Medium";
     return "Low";
@@ -128,6 +130,45 @@
     if (!bar) return;
 
     bar.innerHTML = "";
+
+    const searchForm = document.createElement("form");
+    searchForm.className = "neighbourhood-search";
+    searchForm.setAttribute("role", "search");
+    searchForm.innerHTML = `
+      <label class="sr-only" for="neighbourhoodSearch">Find a neighbourhood</label>
+      <input id="neighbourhoodSearch" list="neighbourhoodOptions" type="search" placeholder="Find a neighbourhood…" autocomplete="off" />
+      <datalist id="neighbourhoodOptions"></datalist>
+      <button type="submit">Find</button>
+    `;
+    const options = searchForm.querySelector("#neighbourhoodOptions");
+    state.datasets.publicMap.forEach(row => {
+      const option = document.createElement("option");
+      option.value = row.name;
+      options.appendChild(option);
+    });
+    searchForm.addEventListener("submit", event => {
+      event.preventDefault();
+      const input = searchForm.querySelector("#neighbourhoodSearch");
+      const query = input.value.trim().toLocaleLowerCase("en-CA");
+      const row = state.datasets.publicMap.find(item => item.name.toLocaleLowerCase("en-CA") === query);
+      if (!row) {
+        input.setCustomValidity("Choose a neighbourhood from the list.");
+        input.reportValidity();
+        return;
+      }
+      input.setCustomValidity("");
+      state.filters.ward = null;
+      document.querySelectorAll(".chip").forEach(chip => {
+        chip.classList.remove("active");
+        chip.setAttribute("aria-pressed", "false");
+      });
+      allChip.classList.add("active");
+      allChip.setAttribute("aria-pressed", "true");
+      renderAll();
+      map.setView([row.lat, row.lng], 14);
+      setDetails(row);
+    });
+    bar.appendChild(searchForm);
 
     const allChip = document.createElement("button");
     allChip.type = "button";
@@ -183,20 +224,23 @@
 
     const score = calculatePriorityScore(row);
     const priority = getPriorityLevel(score);
+    const presenceLabel = row.enuPresence === true ? "Yes" : row.enuPresence === false ? "No" : "Unknown";
+    const presenceClass = row.enuPresence === true ? "yes" : row.enuPresence === false ? "no" : "unknown";
+    const priorityBadge = score === null ? "" : `<span class="badge priority-${priority.toLowerCase()}">Priority: ${priority}</span>`;
 
     box.classList.remove("hidden");
     box.innerHTML = `
       <button class="details-close" type="button" aria-label="Close neighbourhood details">×</button>
       <h3>${escapeHtml(row.name)}</h3>
       <div style="display:flex; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
-        <span class="badge ${row.enuPresence ? "yes" : "no"}">${row.enuPresence ? "ENU Presence*: Yes" : "ENU Presence*: No"}</span>
+        <span class="badge ${presenceClass}">ENU Presence*: ${presenceLabel}</span>
         <span class="badge">Ward: ${escapeHtml(row.ward)}</span>
-        <span class="badge priority-${priority.toLowerCase()}">Priority: ${priority}</span>
+        ${priorityBadge}
       </div>
 
       <div class="row"><span>Active permits</span><strong>${row.permits.toLocaleString()}</strong></div>
       <div class="row"><span>New-home permits (24 mo.)</span><strong>${row.infill.toLocaleString()}</strong></div>
-      <div class="row"><span>Priority score</span><strong>${score}</strong></div>
+      <div class="row"><span>Priority score</span><strong>${score === null ? "Awaiting ENU status" : score}</strong></div>
       <div class="row"><span>Councillor</span><strong>${escapeHtml(row.councillor)}</strong></div>
 
       ${row.leader ? `<div class="row"><span>ENU leader</span><strong>${escapeHtml(row.leader)}</strong></div>` : ""}
@@ -232,16 +276,19 @@
     presenceLayer.clearLayers();
 
     rows.forEach(d => {
+      const isUnknown = d.enuPresence === null;
+      const color = d.enuPresence === true ? "#0038A8" : d.enuPresence === false ? "#CE1126" : "#94a3b8";
+      const presenceLabel = d.enuPresence === true ? "Yes" : d.enuPresence === false ? "No" : "Unknown";
       const marker = L.circleMarker([d.lat, d.lng], {
-        radius: d.enuPresence ? 11 : 10,
-        weight: 2,
-        color: d.enuPresence ? "#0038A8" : "#CE1126",
-        fillColor: d.enuPresence ? "#0038A8" : "#CE1126",
-        fillOpacity: 0.5
+        radius: isUnknown ? 5 : d.enuPresence ? 11 : 10,
+        weight: isUnknown ? 1 : 2,
+        color,
+        fillColor: color,
+        fillOpacity: isUnknown ? 0.35 : 0.5
       })
       .bindPopup(`
         <div><strong>${escapeHtml(d.name)}</strong></div>
-        <div><strong>ENU presence*:</strong> ${d.enuPresence ? "Yes" : "No"}</div>
+        <div><strong>ENU presence*:</strong> ${presenceLabel}</div>
         <div><strong>Active permits:</strong> ${d.permits.toLocaleString()}</div>
         <div><strong>Ward:</strong> ${escapeHtml(d.ward)}</div>
         <div><strong>Councillor:</strong> ${escapeHtml(d.councillor)}</div>
@@ -307,7 +354,7 @@
     gapsLayer.clearLayers();
 
     rows
-      .filter(d => ((d.permits >= 40 && d.infill < 20) || (!d.enuPresence && d.permits >= 40)))
+      .filter(d => ((d.permits >= 40 && d.infill < 20) || (d.enuPresence === false && d.permits >= 40)))
       .forEach(d => {
         const gap = L.circleMarker([d.lat, d.lng], {
           radius: 10,
@@ -336,7 +383,7 @@
     const toggle = document.getElementById("toggle-priority");
     priorityLayer.clearLayers();
 
-    rows.forEach(d => {
+    rows.filter(d => d.enuPresence !== null).forEach(d => {
       const score = calculatePriorityScore(d);
       const level = getPriorityLevel(score);
 
@@ -364,10 +411,11 @@
 
   function renderKPIs(rows) {
     const permits = rows.reduce((sum, r) => sum + r.permits, 0);
-    const yes = rows.filter(r => r.enuPresence).length;
-    const no = rows.filter(r => !r.enuPresence).length;
+    const yes = rows.filter(r => r.enuPresence === true).length;
+    const no = rows.filter(r => r.enuPresence === false).length;
+    const unknown = rows.filter(r => r.enuPresence === null).length;
 
-    const priorityCounts = rows.reduce((acc, row) => {
+    const priorityCounts = rows.filter(row => row.enuPresence !== null).reduce((acc, row) => {
       const level = getPriorityLevel(calculatePriorityScore(row));
       acc[level] = (acc[level] || 0) + 1;
       return acc;
@@ -376,6 +424,7 @@
     document.getElementById("k-permits").textContent = permits.toLocaleString();
     document.getElementById("k-enu-yes").textContent = yes.toLocaleString();
     document.getElementById("k-enu-no").textContent = no.toLocaleString();
+    document.getElementById("k-enu-unknown").textContent = unknown.toLocaleString();
     document.getElementById("k-priority-high").textContent = priorityCounts.High.toLocaleString();
     document.getElementById("k-priority-medium").textContent = priorityCounts.Medium.toLocaleString();
     document.getElementById("k-priority-low").textContent = priorityCounts.Low.toLocaleString();

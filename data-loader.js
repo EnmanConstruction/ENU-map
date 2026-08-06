@@ -74,11 +74,12 @@
     return Number.isFinite(parsed) ? parsed : null;
   }
 
-  function booleanValue(value) {
+  function presenceValue(value) {
     const normalized = String(value ?? "").trim().toLowerCase();
     if (["yes", "y", "true", "1"].includes(normalized)) return true;
     if (["no", "n", "false", "0"].includes(normalized)) return false;
-    return null;
+    if (["", "unknown", "unconfirmed", "pending", "tbd"].includes(normalized)) return null;
+    return undefined;
   }
 
   function updatedDateValue(value) {
@@ -113,10 +114,10 @@
       const lng = coordinateValue(read("lng"));
       const permits = numberValue(read("permits"));
       const infill = numberValue(read("infill"));
-      const enuPresence = booleanValue(read("enuPresence"));
+      const enuPresence = presenceValue(read("enuPresence"));
       const ward = textValue(read("ward"), 100);
 
-      if (!name || lat === null || lng === null || permits === null || infill === null || enuPresence === null || !ward || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      if (!name || lat === null || lng === null || permits === null || infill === null || enuPresence === undefined || !ward || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
         issues.push(`Row ${rowNumber} was skipped because a required value is missing or invalid.`);
         return;
       }

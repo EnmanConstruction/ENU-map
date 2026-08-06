@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "build": "mkdir -p dist && cp index.html styles.css config.js data.js data-loader.js app.js neighbourhoods-template.csv DATA_GUIDE.md dist/",
+    "data:refresh": "node scripts/build-city-data.mjs",
     "test": "node tests/data-loader.test.js"
   }
 }

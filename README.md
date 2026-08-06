@@ -2,12 +2,13 @@
 
 Static micro‑app for Edmonton Neighbourhoods United.
 
-> Current status: stabilized demonstration using sample data. Figures shown in the app are not yet connected to an official ENU data source.
+> Current status: citywide City-backed snapshot with ENU coverage awaiting confirmation. City metrics can be refreshed repeatably; ENU-maintained fields can connect to the public Google Sheet workflow.
 
 ## MVP features
-- ENU presence per neighbourhood (Oilers blue = Yes, Flames red = No)
-- Active development permits (mocked for now)
-- Ward & Councillor (placeholder until live feed)
+- All City of Edmonton neighbourhoods with search and ward navigation
+- ENU presence per neighbourhood (Yes, No, or Unknown)
+- Active development and new-home permit snapshots
+- Current ward and councillor context
 - Densification heatmap + infill hotspots (context)
 - KPIs aligned to the colors
 
@@ -18,7 +19,8 @@ Run `npm run build`, then serve the generated `dist/` directory with a local web
 - `index.html` — accessible page structure and external map dependencies
 - `styles.css` — layout, responsive design, and visual styling
 - `config.js` — public data-source configuration
-- `data.js` — demonstration data only; never store confidential information here
+- `data.js` — generated public City snapshot plus provisional ENU status; never store confidential information here
+- `scripts/build-city-data.mjs` — repeatable City open-data snapshot generator (`npm run data:refresh`)
 - `data-loader.js` — CSV parsing, validation, live loading, and fallback handling
 - `app.js` — map rendering, filters, scoring, KPIs, and mobile interactions
 - `neighbourhoods-template.csv` — import-ready Google Sheets structure
