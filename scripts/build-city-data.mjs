@@ -1,7 +1,12 @@
 import { writeFile } from "node:fs/promises";
 
-const SNAPSHOT_DATE = "2026-08-06";
-const HOUSING_START_DATE = "2024-08-06T00:00:00.000";
+const now = new Date();
+const snapshotDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+const housingStartDate = new Date(snapshotDate);
+housingStartDate.setUTCFullYear(housingStartDate.getUTCFullYear() - 2);
+
+const SNAPSHOT_DATE = snapshotDate.toISOString().slice(0, 10);
+const HOUSING_START_DATE = `${housingStartDate.toISOString().slice(0, 10)}T00:00:00.000`;
 const OUTPUT_URL = new URL("../data.js", import.meta.url);
 
 const ENDPOINTS = Object.freeze({
@@ -50,9 +55,18 @@ function apiUrl(endpoint, params) {
 }
 
 async function fetchJson(url, label) {
-  const response = await fetch(url, { headers: { Accept: "application/json" } });
-  if (!response.ok) throw new Error(`${label} request failed with HTTP ${response.status}.`);
-  return response.json();
+  let lastError;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      const response = await fetch(url, { headers: { Accept: "application/json" } });
+      if (!response.ok) throw new Error(`${label} request failed with HTTP ${response.status}.`);
+      return await response.json();
+    } catch (error) {
+      lastError = error;
+      if (attempt < 3) await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+    }
+  }
+  throw lastError;
 }
 
 function normalizeName(value) {
@@ -125,8 +139,31 @@ async function buildRows() {
   if (missingCentroids.length) {
     console.warn(`Skipped ${missingCentroids.length} row(s) without coordinates: ${missingCentroids.join(", ")}`);
   }
-  if (!rows.length) throw new Error("No City neighbourhood rows were generated.");
+  validateRows(rows, missingCentroids);
   return rows;
+}
+
+function validateRows(rows, missingCentroids) {
+  const expectedWards = Object.keys(COUNCILLORS).sort();
+  const actualWards = [...new Set(rows.map(row => row.ward))].sort();
+  const duplicateNames = rows.filter((row, index) => rows.findIndex(item => item.name === row.name) !== index);
+  const invalidCoordinates = rows.filter(row => row.lat < 53.3 || row.lat > 53.8 || row.lng < -114 || row.lng > -113.1);
+  const missingOverrides = Object.keys(ENU_PRESENCE_OVERRIDES).filter(name => !rows.some(row => row.name === name));
+  const totalPermits = rows.reduce((sum, row) => sum + row.permits, 0);
+  const totalHousingPermits = rows.reduce((sum, row) => sum + row.infill, 0);
+
+  const failures = [];
+  if (rows.length < 380) failures.push(`Only ${rows.length} neighbourhoods were returned; expected at least 380.`);
+  if (missingCentroids.length > 5) failures.push(`${missingCentroids.length} neighbourhoods are missing coordinates.`);
+  if (JSON.stringify(actualWards) !== JSON.stringify(expectedWards)) failures.push("The City ward list is incomplete or has changed.");
+  if (rows.some(row => row.councillor === "TBD")) failures.push("At least one ward does not have a councillor mapping.");
+  if (duplicateNames.length) failures.push("Duplicate neighbourhood names were returned.");
+  if (invalidCoordinates.length) failures.push("At least one neighbourhood coordinate falls outside Edmonton's expected bounds.");
+  if (missingOverrides.length) failures.push(`ENU review rows disappeared: ${missingOverrides.join(", ")}.`);
+  if (totalPermits < 100) failures.push("The active permit total is unexpectedly low.");
+  if (totalHousingPermits < 100) failures.push("The housing permit total is unexpectedly low.");
+
+  if (failures.length) throw new Error(`City data validation failed:\n- ${failures.join("\n- ")}`);
 }
 
 function serialize(rows) {

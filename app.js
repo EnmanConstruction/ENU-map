@@ -1,6 +1,18 @@
 (async function () {
   const statusBox = document.getElementById("mapStatus");
   const dataStatus = document.getElementById("dataStatus");
+  const snapshotNote = document.getElementById("snapshotNote");
+
+  const snapshotDate = typeof ENU_DATA_SNAPSHOT !== "undefined" && ENU_DATA_SNAPSHOT.asOf
+    ? new Date(`${ENU_DATA_SNAPSHOT.asOf}T12:00:00`)
+    : null;
+  const snapshotDateLabel = snapshotDate && !Number.isNaN(snapshotDate.valueOf())
+    ? snapshotDate.toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric" })
+    : "the latest verified refresh";
+
+  if (snapshotNote) {
+    snapshotNote.textContent = `City permit snapshot assembled ${snapshotDateLabel}. The status badge above shows whether the map is using its verified snapshot or a connected live sheet.`;
+  }
 
   function showMapError(message) {
     if (!statusBox) return;
@@ -44,12 +56,12 @@
 
     if (result.source === "fallback") {
       dataStatus.classList.add("fallback");
-      dataStatus.textContent = "City-backed snapshot • Live sheet not connected";
+      dataStatus.textContent = `City-backed snapshot • Updated ${snapshotDateLabel}`;
       dataStatus.title = result.error || "The live sheet could not be loaded.";
       return;
     }
 
-    dataStatus.textContent = "City-backed snapshot • ENU presence awaiting confirmation";
+    dataStatus.textContent = `City-backed snapshot • Updated ${snapshotDateLabel}`;
   }
 
   if (!window.ENUData || typeof window.ENUData.loadPublicData !== "function") {

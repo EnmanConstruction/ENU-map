@@ -16,6 +16,9 @@ Static micro‑app for Edmonton Neighbourhoods United.
 ## Local preview
 Run `npm run build`, then serve the generated `dist/` directory with a local web server.
 
+## Automatic City data refresh
+The `Refresh City map data` GitHub Actions workflow runs every Sunday and can also be started manually. It downloads the current City datasets, validates the result, updates `data.js` only when values changed, and pushes the verified snapshot to `main` for automatic Vercel deployment. A failed download or validation never replaces the production snapshot.
+
 ## Project structure
 - `index.html` — accessible page structure and external map dependencies
 - `styles.css` — layout, responsive design, and visual styling
