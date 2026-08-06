@@ -6,6 +6,7 @@ Static micro‑app for Edmonton Neighbourhoods United.
 
 ## MVP features
 - All City of Edmonton neighbourhoods with search and ward navigation
+- Ranked Top Growth Areas and shareable neighbourhood links
 - ENU presence per neighbourhood (Yes, No, or Unknown)
 - Active development and new-home permit snapshots
 - Current ward and councillor context

@@ -96,6 +96,24 @@
     return rows.filter(d => d.ward === state.filters.ward);
   }
 
+  function rowFromUrl() {
+    const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const requestedName = params.get("neighbourhood")?.trim().toLocaleLowerCase("en-CA");
+    if (!requestedName) return null;
+    return state.datasets.publicMap.find(row => row.name.toLocaleLowerCase("en-CA") === requestedName) || null;
+  }
+
+  function neighbourhoodUrl(row) {
+    const url = new URL(window.location.href);
+    url.hash = new URLSearchParams({ neighbourhood: row.name }).toString();
+    return url.toString();
+  }
+
+  function clearNeighbourhoodUrl() {
+    if (!window.location.hash) return;
+    history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+  }
+
   function calculatePriorityScore(row) {
     if (row.enuPresence === null) return null;
     const permitScore = Math.min(row.permits / 25, 10);
@@ -157,16 +175,7 @@
         return;
       }
       input.setCustomValidity("");
-      state.filters.ward = null;
-      document.querySelectorAll(".chip").forEach(chip => {
-        chip.classList.remove("active");
-        chip.setAttribute("aria-pressed", "false");
-      });
-      allChip.classList.add("active");
-      allChip.setAttribute("aria-pressed", "true");
-      renderAll();
-      map.setView([row.lat, row.lng], 14);
-      setDetails(row);
+      selectNeighbourhood(row);
     });
     bar.appendChild(searchForm);
 
@@ -176,6 +185,7 @@
     allChip.setAttribute("aria-pressed", "true");
     allChip.textContent = "All Wards";
     allChip.addEventListener("click", () => {
+      clearNeighbourhoodUrl();
       state.filters.ward = null;
       document.querySelectorAll(".chip").forEach(c => {
         c.classList.remove("active");
@@ -198,6 +208,7 @@
   ? "papastew Ward"
   : ward;
       chip.addEventListener("click", () => {
+        clearNeighbourhoodUrl();
         state.filters.ward = ward;
         document.querySelectorAll(".chip").forEach(c => {
           c.classList.remove("active");
@@ -247,9 +258,24 @@
       ${row.leaderEmail ? `<div class="row"><span>Leader email</span><strong>${escapeHtml(row.leaderEmail)}</strong></div>` : ""}
       ${row.notes ? `<div class="row"><span>Public notes</span><strong>${escapeHtml(row.notes)}</strong></div>` : ""}
       <p class="provisional-note">* ENU presence is provisional pending confirmation.</p>
+      <button class="share-neighbourhood" type="button">Copy neighbourhood link</button>
+      <span class="share-status" role="status" aria-live="polite"></span>
     `;
 
-    box.querySelector(".details-close")?.addEventListener("click", () => setDetails(null));
+    box.querySelector(".details-close")?.addEventListener("click", () => {
+      clearNeighbourhoodUrl();
+      setDetails(null);
+    });
+    box.querySelector(".share-neighbourhood")?.addEventListener("click", async event => {
+      const status = box.querySelector(".share-status");
+      try {
+        await navigator.clipboard.writeText(neighbourhoodUrl(row));
+        event.currentTarget.textContent = "Link copied";
+        if (status) status.textContent = "Ready to share.";
+      } catch (error) {
+        if (status) status.textContent = "Copy the URL from your browser to share this neighbourhood.";
+      }
+    });
   }
 
   const map = L.map("map", {
@@ -272,6 +298,28 @@
   const priorityLayer = L.layerGroup().addTo(map);
   let heatLayer = null;
 
+  function selectNeighbourhood(row, { updateUrl = true } = {}) {
+    if (!row) return;
+    const hadWardFilter = Boolean(state.filters.ward);
+    state.filters.ward = null;
+    if (hadWardFilter) renderAll();
+    document.querySelectorAll(".chip").forEach(chip => {
+      chip.classList.toggle("active", chip.classList.contains("reset"));
+      chip.setAttribute("aria-pressed", chip.classList.contains("reset") ? "true" : "false");
+    });
+    if (updateUrl) history.replaceState(null, "", neighbourhoodUrl(row));
+    map.setView([row.lat, row.lng], 14);
+    setDetails(row);
+    document.getElementById("sidepanel")?.classList.remove("open");
+    document.getElementById("panelToggle")?.setAttribute("aria-expanded", "false");
+    document.querySelector(".backdrop")?.classList.remove("show");
+  }
+
+  function restoreNeighbourhoodFromUrl() {
+    const row = rowFromUrl();
+    if (row) selectNeighbourhood(row, { updateUrl: false });
+  }
+
   function renderPresence(rows) {
     presenceLayer.clearLayers();
 
@@ -293,7 +341,7 @@
         <div><strong>Ward:</strong> ${escapeHtml(d.ward)}</div>
         <div><strong>Councillor:</strong> ${escapeHtml(d.councillor)}</div>
       `)
-      .on("click", () => setDetails(d));
+      .on("click", () => selectNeighbourhood(d));
 
       presenceLayer.addLayer(marker);
     });
@@ -430,6 +478,28 @@
     document.getElementById("k-priority-low").textContent = priorityCounts.Low.toLocaleString();
   }
 
+  function renderTopGrowth(rows) {
+    const list = document.getElementById("topGrowthList");
+    if (!list) return;
+    list.innerHTML = "";
+    [...rows]
+      .sort((a, b) => b.infill - a.infill || b.permits - a.permits || a.name.localeCompare(b.name, "en-CA"))
+      .slice(0, 5)
+      .forEach((row, index) => {
+        const item = document.createElement("li");
+        const button = document.createElement("button");
+        button.type = "button";
+        button.innerHTML = `
+          <span class="growth-rank">${index + 1}</span>
+          <span class="growth-name">${escapeHtml(row.name)}<small>${escapeHtml(row.ward)}</small></span>
+          <strong>${row.infill.toLocaleString()}<small>permits</small></strong>
+        `;
+        button.addEventListener("click", () => selectNeighbourhood(row));
+        item.appendChild(button);
+        list.appendChild(item);
+      });
+  }
+
   function renderAll() {
     const rows = getFilteredPublicRows();
     renderPresence(rows);
@@ -438,11 +508,14 @@
     renderGaps(rows);
     renderPriority(rows);
     renderKPIs(rows);
+    renderTopGrowth(rows);
     setDetails(null);
   }
 
   buildWardChips();
   renderAll();
+  restoreNeighbourhoodFromUrl();
+  window.addEventListener("hashchange", restoreNeighbourhoodFromUrl);
 
   ["toggle-heat", "toggle-hotspots", "toggle-gaps", "toggle-priority"].forEach(id => {
     const el = document.getElementById(id);

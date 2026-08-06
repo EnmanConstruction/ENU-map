@@ -163,6 +163,45 @@
       font-size:16px;
     }
 
+    .panel-intro{
+      margin:-4px 0 10px;
+      color:#aebbd3;
+      font-size:11px;
+      line-height:1.4;
+    }
+
+    .growth-list{
+      display:grid;
+      gap:6px;
+      margin:0;
+      padding:0;
+      list-style:none;
+    }
+
+    .growth-list button{
+      display:grid;
+      grid-template-columns:24px 1fr auto;
+      align-items:center;
+      gap:8px;
+      width:100%;
+      padding:8px;
+      color:#e6eefc;
+      background:#0e1530;
+      border:1px solid #1b2648;
+      border-radius:10px;
+      font:inherit;
+      text-align:left;
+      cursor:pointer;
+    }
+
+    .growth-list button:hover{border-color:rgba(88,166,255,.6);background:#121d3d}
+    .growth-list button:focus-visible,
+    .share-neighbourhood:focus-visible{outline:3px solid rgba(88,166,255,.75);outline-offset:2px}
+    .growth-rank{display:grid;place-items:center;width:22px;height:22px;color:#fde68a;background:rgba(245,158,11,.15);border-radius:50%;font-size:11px;font-weight:800}
+    .growth-name{min-width:0;font-size:12px;font-weight:700}
+    .growth-list small{display:block;color:#94a3b8;font-size:9px;font-weight:500}
+    .growth-list strong{text-align:right;color:#fbbf24;font-size:12px}
+
     .legend .row{
       display:flex;
       align-items:center;
@@ -305,6 +344,21 @@
       border-radius:8px;
       cursor:pointer;
     }
+
+    .share-neighbourhood{
+      margin-top:10px;
+      padding:7px 10px;
+      color:#dbeafe;
+      background:rgba(59,130,246,.14);
+      border:1px solid rgba(88,166,255,.45);
+      border-radius:8px;
+      font:inherit;
+      font-size:12px;
+      font-weight:700;
+      cursor:pointer;
+    }
+
+    .share-status{margin-left:8px;color:#bbf7d0;font-size:11px}
 
     .map-status{
       position:fixed;
