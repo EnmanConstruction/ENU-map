@@ -14,6 +14,13 @@ Static micro‑app for Edmonton Neighbourhoods United.
 ## Local preview
 Run `npm run build`, then serve the generated `dist/` directory with a local web server.
 
+## Project structure
+- `index.html` — accessible page structure and external map dependencies
+- `styles.css` — layout, responsive design, and visual styling
+- `data.js` — demonstration data only; never store confidential information here
+- `app.js` — map rendering, filters, scoring, KPIs, and mobile interactions
+- `dist/` — generated deployment output (not committed)
+
 ## Deploy to Vercel
 1. Create a new project at https://vercel.com/new
 2. Import this folder (or push to GitHub then import).

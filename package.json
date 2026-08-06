@@ -2,6 +2,6 @@
   "name": "enu-map",
   "private": true,
   "scripts": {
-    "build": "mkdir -p dist && cp index.html dist/index.html"
+    "build": "mkdir -p dist && cp index.html styles.css data.js app.js dist/"
   }
 }
