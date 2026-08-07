@@ -2,8 +2,8 @@
   "name": "enu-map",
   "private": true,
   "scripts": {
-    "build": "mkdir -p dist && cp index.html styles.css config.js data.js data-loader.js app.js neighbourhoods-template.csv DATA_GUIDE.md dist/",
+    "build": "mkdir -p dist && cp index.html styles.css config.js data.js data-loader.js identity-data.js app.js neighbourhoods-template.csv DATA_GUIDE.md dist/",
     "data:refresh": "node scripts/build-city-data.mjs",
-    "test": "node tests/data-loader.test.js"
+    "test": "node tests/data-loader.test.js && node tests/identity-data.test.js"
   }
 }

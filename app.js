@@ -106,16 +106,19 @@
     return rows.filter(d => d.ward === state.filters.ward);
   }
 
-  function rowFromUrl() {
+  function selectionFromUrl() {
     const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
     const requestedName = params.get("neighbourhood")?.trim().toLocaleLowerCase("en-CA");
     if (!requestedName) return null;
-    return state.datasets.publicMap.find(row => row.name.toLocaleLowerCase("en-CA") === requestedName) || null;
+    const row = state.datasets.publicMap.find(item => item.name.toLocaleLowerCase("en-CA") === requestedName) || null;
+    return row ? { row, identityName: params.get("community")?.trim() || null } : null;
   }
 
-  function neighbourhoodUrl(row) {
+  function neighbourhoodUrl(row, identityName = null) {
     const url = new URL(window.location.href);
-    url.hash = new URLSearchParams({ neighbourhood: row.name }).toString();
+    const params = new URLSearchParams({ neighbourhood: row.name });
+    if (identityName && identityName !== row.name) params.set("community", identityName);
+    url.hash = params.toString();
     return url.toString();
   }
 
@@ -153,7 +156,7 @@
     return "#22c55e";
   }
 
-  function buildWardChips() {
+  function buildFilters() {
     const bar = document.getElementById("filters");
     if (!bar) return;
 
@@ -163,8 +166,8 @@
     searchForm.className = "neighbourhood-search";
     searchForm.setAttribute("role", "search");
     searchForm.innerHTML = `
-      <label class="sr-only" for="neighbourhoodSearch">Find a neighbourhood</label>
-      <input id="neighbourhoodSearch" list="neighbourhoodOptions" type="search" placeholder="Find a neighbourhood…" autocomplete="off" />
+      <label class="sr-only" for="neighbourhoodSearch">Find a neighbourhood or community</label>
+      <input id="neighbourhoodSearch" list="neighbourhoodOptions" type="search" placeholder="Search neighbourhood or community…" autocomplete="off" />
       <datalist id="neighbourhoodOptions"></datalist>
       <button type="submit">Find</button>
     `;
@@ -174,66 +177,51 @@
       option.value = row.name;
       options.appendChild(option);
     });
+    window.ENUIdentity?.aliases?.forEach(alias => {
+      const option = document.createElement("option");
+      option.value = alias.name;
+      option.label = alias.kind;
+      options.appendChild(option);
+    });
     searchForm.addEventListener("submit", event => {
       event.preventDefault();
       const input = searchForm.querySelector("#neighbourhoodSearch");
-      const query = input.value.trim().toLocaleLowerCase("en-CA");
-      const row = state.datasets.publicMap.find(item => item.name.toLocaleLowerCase("en-CA") === query);
-      if (!row) {
-        input.setCustomValidity("Choose a neighbourhood from the list.");
+      const resolution = window.ENUIdentity?.resolve(input.value, state.datasets.publicMap);
+      if (!resolution) {
+        input.setCustomValidity("Choose a neighbourhood or community from the list.");
         input.reportValidity();
         return;
       }
       input.setCustomValidity("");
-      selectNeighbourhood(row);
+      if (resolution.rows.length === 1) {
+        selectNeighbourhood(resolution.rows[0], { identityName: resolution.type === "alias" ? resolution.name : null });
+      } else {
+        showAreaChoices(resolution);
+      }
     });
     bar.appendChild(searchForm);
 
-    const allChip = document.createElement("button");
-    allChip.type = "button";
-    allChip.className = "chip reset active";
-    allChip.setAttribute("aria-pressed", "true");
-    allChip.textContent = "All Wards";
-    allChip.addEventListener("click", () => {
+    const wardGroup = document.createElement("div");
+    wardGroup.className = "ward-filter";
+    wardGroup.innerHTML = `<label for="wardFilter">Ward <span>(optional)</span></label><select id="wardFilter"><option value="">All wards</option></select>`;
+    const wardSelect = wardGroup.querySelector("select");
+    uniqueWards(state.datasets.publicMap).sort((a, b) => a.localeCompare(b, "en-CA")).forEach(ward => {
+      const option = document.createElement("option");
+      option.value = ward;
+      option.textContent = ward;
+      wardSelect.appendChild(option);
+    });
+    wardSelect.addEventListener("change", () => {
       clearNeighbourhoodUrl();
-      state.filters.ward = null;
-      document.querySelectorAll(".chip").forEach(c => {
-        c.classList.remove("active");
-        c.setAttribute("aria-pressed", "false");
-      });
-      allChip.classList.add("active");
-      allChip.setAttribute("aria-pressed", "true");
+      state.filters.ward = wardSelect.value || null;
       renderAll();
+      if (state.filters.ward) fitToWard(state.filters.ward);
+      else map.setView([53.5444, -113.4909], 11);
     });
-    bar.appendChild(allChip);
-
-    uniqueWards(state.datasets.publicMap).forEach(ward => {
-      const chip = document.createElement("button");
-      chip.type = "button";
-      chip.className = "chip";
-      chip.setAttribute("aria-pressed", "false");
-      chip.textContent = ward === "O-day'min"
-  ? "O-day'min Ward"
-  : ward === "papastew"
-  ? "papastew Ward"
-  : ward;
-      chip.addEventListener("click", () => {
-        clearNeighbourhoodUrl();
-        state.filters.ward = ward;
-        document.querySelectorAll(".chip").forEach(c => {
-          c.classList.remove("active");
-          c.setAttribute("aria-pressed", "false");
-        });
-        chip.classList.add("active");
-        chip.setAttribute("aria-pressed", "true");
-        renderAll();
-        fitToWard(ward);
-      });
-      bar.appendChild(chip);
-    });
+    bar.appendChild(wardGroup);
   }
 
-  function setDetails(row) {
+  function setDetails(row, identityName = null) {
     const box = document.getElementById("details");
     if (!box) return;
 
@@ -252,16 +240,17 @@
     box.classList.remove("hidden");
     box.innerHTML = `
       <button class="details-close" type="button" aria-label="Close neighbourhood details">×</button>
-      <h3>${escapeHtml(row.name)}</h3>
+      <h3>${escapeHtml(identityName || row.name)}</h3>
+      ${identityName && identityName !== row.name ? `<p class="official-geography">Official City neighbourhood: <strong>${escapeHtml(row.name)}</strong></p>` : ""}
       <div style="display:flex; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
         <span class="badge ${presenceClass}">ENU Presence*: ${presenceLabel}</span>
-        <span class="badge">Ward: ${escapeHtml(row.ward)}</span>
         ${priorityBadge}
       </div>
 
       <div class="row"><span>Active permits</span><strong>${row.permits.toLocaleString()}</strong></div>
       <div class="row"><span>New-home permits (24 mo.)</span><strong>${row.infill.toLocaleString()}</strong></div>
       <div class="row"><span>Priority score</span><strong>${score === null ? "Awaiting ENU status" : score}</strong></div>
+      <div class="row civic-context"><span>Ward</span><strong>${escapeHtml(row.ward)}</strong></div>
       <div class="row"><span>Councillor</span><strong>${escapeHtml(row.councillor)}</strong></div>
 
       ${row.leader ? `<div class="row"><span>ENU leader</span><strong>${escapeHtml(row.leader)}</strong></div>` : ""}
@@ -279,13 +268,33 @@
     box.querySelector(".share-neighbourhood")?.addEventListener("click", async event => {
       const status = box.querySelector(".share-status");
       try {
-        await navigator.clipboard.writeText(neighbourhoodUrl(row));
+        await navigator.clipboard.writeText(neighbourhoodUrl(row, identityName));
         event.currentTarget.textContent = "Link copied";
         if (status) status.textContent = "Ready to share.";
       } catch (error) {
         if (status) status.textContent = "Copy the URL from your browser to share this neighbourhood.";
       }
     });
+  }
+
+  function showAreaChoices(resolution) {
+    const box = document.getElementById("details");
+    if (!box) return;
+    clearNeighbourhoodUrl();
+    const bounds = L.latLngBounds(resolution.rows.map(row => [row.lat, row.lng]));
+    map.fitBounds(bounds.pad(0.35));
+    box.classList.remove("hidden");
+    box.innerHTML = `
+      <button class="details-close" type="button" aria-label="Close area choices">×</button>
+      <h3>${escapeHtml(resolution.name)}</h3>
+      <p class="official-geography">This familiar area includes several official City neighbourhoods. Choose yours:</p>
+      <div class="area-choices">${resolution.rows.map(row => `<button type="button" data-neighbourhood="${escapeHtml(row.name)}">${escapeHtml(row.name)}<small>${escapeHtml(row.ward)} ward</small></button>`).join("")}</div>
+    `;
+    box.querySelector(".details-close")?.addEventListener("click", () => setDetails(null));
+    box.querySelectorAll("[data-neighbourhood]").forEach(button => button.addEventListener("click", () => {
+      const row = resolution.rows.find(item => item.name === button.dataset.neighbourhood);
+      selectNeighbourhood(row);
+    }));
   }
 
   const map = L.map("map", {
@@ -315,26 +324,24 @@
     return coarsePointer ? 16 : 12;
   }
 
-  function selectNeighbourhood(row, { updateUrl = true } = {}) {
+  function selectNeighbourhood(row, { updateUrl = true, identityName = null } = {}) {
     if (!row) return;
     const hadWardFilter = Boolean(state.filters.ward);
     state.filters.ward = null;
     if (hadWardFilter) renderAll();
-    document.querySelectorAll(".chip").forEach(chip => {
-      chip.classList.toggle("active", chip.classList.contains("reset"));
-      chip.setAttribute("aria-pressed", chip.classList.contains("reset") ? "true" : "false");
-    });
-    if (updateUrl) history.replaceState(null, "", neighbourhoodUrl(row));
+    const wardSelect = document.getElementById("wardFilter");
+    if (wardSelect) wardSelect.value = "";
+    if (updateUrl) history.replaceState(null, "", neighbourhoodUrl(row, identityName));
     map.setView([row.lat, row.lng], 14);
-    setDetails(row);
+    setDetails(row, identityName);
     document.getElementById("sidepanel")?.classList.remove("open");
     document.getElementById("panelToggle")?.setAttribute("aria-expanded", "false");
     document.querySelector(".backdrop")?.classList.remove("show");
   }
 
   function restoreNeighbourhoodFromUrl() {
-    const row = rowFromUrl();
-    if (row) selectNeighbourhood(row, { updateUrl: false });
+    const selection = selectionFromUrl();
+    if (selection) selectNeighbourhood(selection.row, { updateUrl: false, identityName: selection.identityName });
   }
 
   function renderPresence(rows) {
@@ -544,7 +551,7 @@
     interactionLayer.eachLayer(layer => layer.bringToFront?.());
   }
 
-  buildWardChips();
+  buildFilters();
   renderAll();
   restoreNeighbourhoodFromUrl();
   window.addEventListener("hashchange", restoreNeighbourhoodFromUrl);
