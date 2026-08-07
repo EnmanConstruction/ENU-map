@@ -361,12 +361,12 @@
       position:fixed;
       right:16px;
       bottom:16px;
-      width:340px;
+      width:390px;
       max-width:92vw;
       background:var(--card);
       border:1px solid #1b2648;
       border-radius:14px;
-      padding:12px;
+      padding:16px;
       box-shadow:0 10px 30px rgba(0,0,0,.45);
       z-index:1200;
     }
@@ -376,8 +376,17 @@
     }
 
     .details h3{
-      margin:0 0 8px 0;
-      font-size:16px;
+      margin:1px 38px 8px 0;
+      font-size:23px;
+      line-height:1.15;
+    }
+
+    .profile-eyebrow{
+      color:#7dd3fc;
+      font-size:10px;
+      font-weight:800;
+      letter-spacing:.11em;
+      text-transform:uppercase;
     }
 
     .official-geography{
@@ -387,7 +396,67 @@
       line-height:1.4;
     }
 
-    .civic-context{margin-top:10px;padding-top:8px;border-top:1px solid #1b2648}
+    .profile-section{
+      margin-top:11px;
+      padding:11px;
+      background:rgba(255,255,255,.025);
+      border:1px solid #1b2648;
+      border-radius:11px;
+    }
+
+    .profile-section-heading{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      color:#dbeafe;
+      font-size:12px;
+      font-weight:800;
+    }
+
+    .profile-section p{margin:6px 0 0;color:#aebbd3;font-size:11px;line-height:1.4}
+
+    .growth-level{
+      padding:3px 7px;
+      border-radius:999px;
+      font-size:10px;
+      text-transform:uppercase;
+    }
+    .growth-level.very-high{color:#fee2e2;background:rgba(239,68,68,.2)}
+    .growth-level.high{color:#ffedd5;background:rgba(249,115,22,.18)}
+    .growth-level.moderate{color:#fef3c7;background:rgba(245,158,11,.18)}
+    .growth-level.lower{color:#dcfce7;background:rgba(34,197,94,.16)}
+
+    .profile-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+    .profile-metrics div{padding:9px;background:#0e1530;border-radius:9px}
+    .profile-metrics strong{display:block;color:#fff;font-size:19px}
+    .profile-metrics span{display:block;margin-top:2px;color:#94a3b8;font-size:9px;line-height:1.25}
+    .profile-contact,.priority-line{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:9px;font-size:11px}
+    .profile-contact span,.priority-line span:last-child{color:#94a3b8}
+    .awaiting-contact{padding:7px 8px;background:rgba(148,163,184,.08);border-radius:7px}
+    .civic-summary .row{margin:7px 0 0}
+
+    .profile-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+    .profile-action{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:38px;
+      box-sizing:border-box;
+      padding:8px 10px;
+      border-radius:9px;
+      font:inherit;
+      font-size:11px;
+      font-weight:800;
+      text-align:center;
+      text-decoration:none;
+      cursor:pointer;
+    }
+    .profile-action.primary{color:#07111f;background:#7dd3fc;border:1px solid #7dd3fc}
+    .profile-action.secondary{margin:0;color:#dbeafe;background:rgba(59,130,246,.14);border:1px solid rgba(88,166,255,.45)}
+    .profile-action.disabled{color:#94a3b8;background:rgba(148,163,184,.08);border:1px solid #334155;cursor:default}
+    .profile-action:focus-visible{outline:3px solid rgba(88,166,255,.75);outline-offset:2px}
+    .profile-footnote{margin:9px 0 0;color:#8190aa;font-size:9px;line-height:1.35}
 
     .area-choices{display:grid;gap:7px}
     .area-choices button{
@@ -422,20 +491,7 @@
       cursor:pointer;
     }
 
-    .share-neighbourhood{
-      margin-top:10px;
-      padding:7px 10px;
-      color:#dbeafe;
-      background:rgba(59,130,246,.14);
-      border:1px solid rgba(88,166,255,.45);
-      border-radius:8px;
-      font:inherit;
-      font-size:12px;
-      font-weight:700;
-      cursor:pointer;
-    }
-
-    .share-status{margin-left:8px;color:#bbf7d0;font-size:11px}
+    .share-status{display:block;margin-top:6px;color:#bbf7d0;font-size:10px;text-align:center}
 
     .map-status{
       position:fixed;
@@ -581,6 +637,8 @@
         right:12px;
         bottom:12px;
         width:auto;
+        max-height:calc(100vh - 190px);
+        overflow:auto;
       }
 
       .neighbourhood-search{width:100%;margin-right:0}

@@ -156,6 +156,24 @@
     return "#22c55e";
   }
 
+  function growthProfile(row) {
+    if (row.infill >= 200) return { level: "Very high", className: "very-high", summary: "One of Edmonton’s fastest-growing neighbourhoods." };
+    if (row.infill >= 40) return { level: "High", className: "high", summary: "Significant new-home activity is underway." };
+    if (row.infill >= 10) return { level: "Moderate", className: "moderate", summary: "Steady new-home activity is underway." };
+    return { level: "Lower", className: "lower", summary: "Limited new-home activity appears in this snapshot." };
+  }
+
+  function involvementAction(row, displayName) {
+    const subject = encodeURIComponent(`ENU involvement in ${displayName}`);
+    if (row.leaderEmail) {
+      return `<a class="profile-action primary" href="mailto:${encodeURIComponent(row.leaderEmail)}?subject=${subject}">Contact the local ENU leader</a>`;
+    }
+    const url = window.ENU_DATA_CONFIG?.getInvolvedUrl || "https://www.edmontonneighbourhoodsunited.com/get-involved";
+    return url
+      ? `<a class="profile-action primary" href="${escapeHtml(url)}" target="_blank" rel="noopener">Get involved with ENU</a>`
+      : `<span class="profile-action disabled" aria-disabled="true">Local contact coming soon</span>`;
+  }
+
   function buildFilters() {
     const bar = document.getElementById("filters");
     if (!bar) return;
@@ -236,29 +254,50 @@
     const presenceLabel = row.enuPresence === true ? "Yes" : row.enuPresence === false ? "No" : "Unknown";
     const presenceClass = row.enuPresence === true ? "yes" : row.enuPresence === false ? "no" : "unknown";
     const priorityBadge = score === null ? "" : `<span class="badge priority-${priority.toLowerCase()}">Priority: ${priority}</span>`;
+    const displayName = identityName || row.name;
+    const growth = growthProfile(row);
+    const coverageCopy = row.enuPresence === true
+      ? "ENU already has a confirmed presence here."
+      : row.enuPresence === false
+      ? "ENU does not yet have a confirmed local presence here."
+      : "ENU is still confirming local representation here.";
 
     box.classList.remove("hidden");
     box.innerHTML = `
       <button class="details-close" type="button" aria-label="Close neighbourhood details">×</button>
-      <h3>${escapeHtml(identityName || row.name)}</h3>
+      <div class="profile-eyebrow">Neighbourhood profile</div>
+      <h3>${escapeHtml(displayName)}</h3>
       ${identityName && identityName !== row.name ? `<p class="official-geography">Official City neighbourhood: <strong>${escapeHtml(row.name)}</strong></p>` : ""}
-      <div style="display:flex; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
-        <span class="badge ${presenceClass}">ENU Presence*: ${presenceLabel}</span>
-        ${priorityBadge}
-      </div>
 
-      <div class="row"><span>Active permits</span><strong>${row.permits.toLocaleString()}</strong></div>
-      <div class="row"><span>New-home permits (24 mo.)</span><strong>${row.infill.toLocaleString()}</strong></div>
-      <div class="row"><span>Priority score</span><strong>${score === null ? "Awaiting ENU status" : score}</strong></div>
-      <div class="row civic-context"><span>Ward</span><strong>${escapeHtml(row.ward)}</strong></div>
-      <div class="row"><span>Councillor</span><strong>${escapeHtml(row.councillor)}</strong></div>
+      <section class="profile-section growth-summary">
+        <div class="profile-section-heading"><span>Housing growth</span><span class="growth-level ${growth.className}">${growth.level}</span></div>
+        <p>${growth.summary}</p>
+        <div class="profile-metrics">
+          <div><strong>${row.infill.toLocaleString()}</strong><span>New-home permits<br>past 24 months</span></div>
+          <div><strong>${row.permits.toLocaleString()}</strong><span>Active development<br>permits</span></div>
+        </div>
+      </section>
 
-      ${row.leader ? `<div class="row"><span>ENU leader</span><strong>${escapeHtml(row.leader)}</strong></div>` : ""}
-      ${row.leaderEmail ? `<div class="row"><span>Leader email</span><strong>${escapeHtml(row.leaderEmail)}</strong></div>` : ""}
+      <section class="profile-section enu-summary">
+        <div class="profile-section-heading"><span>ENU in this neighbourhood</span><span class="badge ${presenceClass}">${presenceLabel}</span></div>
+        <p>${coverageCopy}</p>
+        ${row.leader ? `<div class="profile-contact"><span>Local leader</span><strong>${escapeHtml(row.leader)}</strong></div>` : `<p class="awaiting-contact">Local leader information is awaiting ENU confirmation.</p>`}
+        ${priorityBadge ? `<div class="priority-line">${priorityBadge}<span>Advocacy score ${score}</span></div>` : ""}
+      </section>
+
+      <section class="profile-section civic-summary">
+        <div class="profile-section-heading"><span>Civic information</span></div>
+        <div class="row"><span>Ward</span><strong>${escapeHtml(row.ward)}</strong></div>
+        <div class="row"><span>Councillor</span><strong>${escapeHtml(row.councillor)}</strong></div>
+      </section>
       ${row.notes ? `<div class="row"><span>Public notes</span><strong>${escapeHtml(row.notes)}</strong></div>` : ""}
-      <p class="provisional-note">* ENU presence is provisional pending confirmation.</p>
-      <button class="share-neighbourhood" type="button">Copy neighbourhood link</button>
+
+      <div class="profile-actions">
+        ${involvementAction(row, displayName)}
+        <button class="share-neighbourhood profile-action secondary" type="button">Copy profile link</button>
+      </div>
       <span class="share-status" role="status" aria-live="polite"></span>
+      <p class="profile-footnote">ENU status is provisional pending confirmation. City permit data reflects the latest verified snapshot.</p>
     `;
 
     box.querySelector(".details-close")?.addEventListener("click", () => {
