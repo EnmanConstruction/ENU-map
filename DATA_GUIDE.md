@@ -16,7 +16,9 @@ The public map accepts a Google Sheet published as CSV. Every value in this shee
 
 ## Optional columns
 
-`councillor`, `leader`, `leader_email`, `public_notes`, and `last_updated`.
+`councillor`, `community_league`, `leader`, `leader_email`, `public_notes`, and `last_updated`.
+
+When `community_league` is blank, the map retains the verified City-backed relationship for that neighbourhood. Do not guess a league from the nearest hall; one league can serve several neighbourhoods.
 
 Do not include private volunteer information, internal strategy notes, private email addresses, petition details, or anything ENU does not intend to publish.
 

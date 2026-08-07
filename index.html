@@ -49,6 +49,7 @@
     <label class="toggle"><input id="toggle-hotspots" type="checkbox" checked /> Housing-growth hotspots (24 mo.)</label>
     <label class="toggle"><input id="toggle-gaps" type="checkbox" checked /> Areas needing local advocates</label>
     <label class="toggle"><input id="toggle-priority" type="checkbox" checked /> Strategic priority layer</label>
+    <label class="toggle"><input id="toggle-halls" type="checkbox" /> Community league halls</label>
   </div>
 
   <div class="panel">
@@ -70,6 +71,8 @@
       <div class="legend-item"><span class="ring priority-high" aria-hidden="true"></span><span>Strategic priority: High</span></div>
       <div class="legend-item"><span class="ring priority-medium" aria-hidden="true"></span><span>Strategic priority: Medium</span></div>
       <div class="legend-item"><span class="ring priority-low" aria-hidden="true"></span><span>Strategic priority: Low</span></div>
+      <h3>Community landmarks</h3>
+      <div class="legend-item"><span class="hall-symbol" aria-hidden="true"></span><span>Community league hall</span></div>
     </div>
   </div>
 
@@ -80,6 +83,7 @@
         <p><strong>Active development</strong> counts City development-permit records currently marked In Progress.</p>
         <p><strong>Housing growth</strong> counts new-building permits adding at least one home during the trailing 24 months.</p>
         <p><strong>ENU presence</strong> is maintained by ENU. Unknown means the neighbourhood has not yet been confirmed—not that ENU is absent.</p>
+        <p><strong>Community leagues</strong> use City neighbourhood service geography where the relationship is clear. Hall locations come from the City’s Community League Halls dataset; unresolved neighbourhoods link to EFCL’s league finder.</p>
         <p id="snapshotNote" class="source-note">City permit snapshot date is loading. The status badge above shows whether the map is using its verified snapshot or a connected live sheet.</p>
       </div>
     </details>

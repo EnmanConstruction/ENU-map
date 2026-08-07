@@ -1,13 +1,13 @@
-name,lat,lng,permits,infill,enu_presence,ward,councillor,leader,leader_email,public_notes,last_updated
-Wîhkwêntôwin,53.541983,-113.523994,34,1,Yes,O-day'min,Anne Stevenson,,,,2026-08-06
-Downtown,53.539767,-113.499421,126,0,Yes,O-day'min,Anne Stevenson,,,,2026-08-06
-Strathcona,53.522390,-113.490986,48,19,Yes,papastew,Michael Janz,,,,2026-08-06
-Westmount,53.549995,-113.539976,41,37,No,O-day'min,Anne Stevenson,,,,2026-08-06
-Garneau,53.519911,-113.513536,27,9,No,papastew,Michael Janz,,,,2026-08-06
-Glenora,53.544905,-113.557043,21,58,No,Nakota Isga,Reed Clarke,,,,2026-08-06
-Ritchie,53.513275,-113.482742,22,32,Yes,papastew,Michael Janz,,,,2026-08-06
-Highlands,53.565999,-113.430171,6,20,No,Métis,Ashley Salvador,,,,2026-08-06
-Bonnie Doon,53.525337,-113.467111,12,45,No,Métis,Ashley Salvador,,,,2026-08-06
-Keswick,53.417587,-113.632212,20,710,No,pihêsiwin,Mike Elliott,,,,2026-08-06
-Windermere,53.432342,-113.626688,12,40,No,pihêsiwin,Mike Elliott,,,,2026-08-06
-Laurel,53.445799,-113.381470,11,10,No,Sspomitapi,Jo-Anne Wright,,,,2026-08-06
+name,lat,lng,permits,infill,enu_presence,ward,councillor,community_league,leader,leader_email,public_notes,last_updated
+Wîhkwêntôwin,53.541983,-113.523994,34,1,Yes,O-day'min,Anne Stevenson,,,,,2026-08-06
+Downtown,53.539767,-113.499421,126,0,Yes,O-day'min,Anne Stevenson,,,,,2026-08-06
+Strathcona,53.522390,-113.490986,48,19,Yes,papastew,Michael Janz,,,,,2026-08-06
+Westmount,53.549995,-113.539976,41,37,No,O-day'min,Anne Stevenson,,,,,2026-08-06
+Garneau,53.519911,-113.513536,27,9,No,papastew,Michael Janz,,,,,2026-08-06
+Glenora,53.544905,-113.557043,21,58,No,Nakota Isga,Reed Clarke,,,,,2026-08-06
+Ritchie,53.513275,-113.482742,22,32,Yes,papastew,Michael Janz,,,,,2026-08-06
+Highlands,53.565999,-113.430171,6,20,No,Métis,Ashley Salvador,,,,,2026-08-06
+Bonnie Doon,53.525337,-113.467111,12,45,No,Métis,Ashley Salvador,,,,,2026-08-06
+Keswick,53.417587,-113.632212,20,710,No,pihêsiwin,Mike Elliott,,,,,2026-08-06
+Windermere,53.432342,-113.626688,12,40,No,pihêsiwin,Mike Elliott,,,,,2026-08-06
+Laurel,53.445799,-113.381470,11,10,No,Sspomitapi,Jo-Anne Wright,,,,,2026-08-06

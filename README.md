@@ -10,6 +10,7 @@ Static micro‑app for Edmonton Neighbourhoods United.
 - ENU presence per neighbourhood (Yes, No, or Unknown)
 - Active development and new-home permit snapshots
 - Current ward and councillor context
+- City-backed community-league relationships and optional hall locations
 - Densification heatmap + infill hotspots (context)
 - KPIs aligned to the colors
 

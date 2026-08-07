@@ -276,6 +276,7 @@
     .ring.priority-high{border-color:var(--priority-high)}
     .ring.priority-medium{border-color:var(--priority-medium)}
     .ring.priority-low{border-color:var(--priority-low)}
+    .hall-symbol{justify-self:center;width:14px;height:14px;background:#0891b2;border:2px solid #e0f2fe;border-radius:4px}
 
     #map{
       width:100%;
@@ -435,6 +436,11 @@
     .profile-contact span,.priority-line span:last-child{color:#94a3b8}
     .awaiting-contact{padding:7px 8px;background:rgba(148,163,184,.08);border-radius:7px}
     .civic-summary .row{margin:7px 0 0}
+    .league-name{margin-top:7px;color:#7dd3fc;font-size:15px;font-weight:800;line-height:1.25}
+    .league-link{display:inline-flex;margin-top:9px;color:#7dd3fc;font-size:11px;font-weight:800;text-decoration:none}
+    .league-link:hover{text-decoration:underline}
+    .league-link:focus-visible{outline:3px solid rgba(88,166,255,.75);outline-offset:3px;border-radius:3px}
+    .community-hall-marker{cursor:pointer}
 
     .profile-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
     .profile-action{

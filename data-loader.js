@@ -12,6 +12,7 @@
     enuPresence: ["enu_presence", "enupresence", "enu"],
     ward: ["ward"],
     councillor: ["councillor", "councilor"],
+    communityLeague: ["community_league", "communityleague", "league"],
     leader: ["leader", "enu_leader"],
     leaderEmail: ["leader_email", "leaderemail"],
     notes: ["notes", "public_notes"],
@@ -134,6 +135,7 @@
         enuPresence,
         ward,
         councillor: textValue(read("councillor"), 100) || "TBD",
+        communityLeague: textValue(read("communityLeague"), 140),
         leader: textValue(read("leader"), 100),
         leaderEmail: textValue(read("leaderEmail"), 160),
         notes: textValue(read("notes"), 500)

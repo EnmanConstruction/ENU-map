@@ -71,11 +71,17 @@
 
   const publicDataResult = await window.ENUData.loadPublicData(window.ENU_DATA_CONFIG || {}, FALLBACK_PUBLIC_DATA);
   updateDataStatus(publicDataResult);
+  const cityMetadataByName = new Map(FALLBACK_PUBLIC_DATA.map(row => [row.name.toLocaleUpperCase("en-CA"), row]));
+  const publicRows = publicDataResult.rows.map(row => {
+    const cityRow = cityMetadataByName.get(row.name.toLocaleUpperCase("en-CA"));
+    return { ...row, communityLeague: row.communityLeague || cityRow?.communityLeague || "" };
+  });
 
   const state = {
     filters: { ward: null },
     datasets: {
-      publicMap: publicDataResult.rows
+      publicMap: publicRows,
+      communityHalls: typeof FALLBACK_COMMUNITY_HALLS !== "undefined" ? FALLBACK_COMMUNITY_HALLS : []
     }
   };
 
@@ -172,6 +178,12 @@
     return url
       ? `<a class="profile-action primary" href="${escapeHtml(url)}" target="_blank" rel="noopener">Get involved with ENU</a>`
       : `<span class="profile-action disabled" aria-disabled="true">Local contact coming soon</span>`;
+  }
+
+  function leagueAction(row) {
+    const finderUrl = window.ENU_DATA_CONFIG?.communityLeagueFinderUrl || "https://efcl.org/league-search/";
+    const label = row.communityLeague ? "Connect with this community league" : "Find your community league";
+    return `<a class="league-link" href="${escapeHtml(finderUrl)}" target="_blank" rel="noopener">${label}</a>`;
   }
 
   function buildFilters() {
@@ -286,7 +298,15 @@
       </section>
 
       <section class="profile-section civic-summary">
-        <div class="profile-section-heading"><span>Civic information</span></div>
+        <div class="profile-section-heading"><span>Community connection</span></div>
+        ${row.communityLeague
+          ? `<div class="league-name">${escapeHtml(row.communityLeague)}</div><p>Community leagues connect neighbours through local programs, facilities, events, and advocacy.</p>`
+          : `<p>The community-league relationship for this neighbourhood is still being verified.</p>`}
+        ${leagueAction(row)}
+      </section>
+
+      <section class="profile-section civic-summary">
+        <div class="profile-section-heading"><span>City representation</span></div>
         <div class="row"><span>Ward</span><strong>${escapeHtml(row.ward)}</strong></div>
         <div class="row"><span>Councillor</span><strong>${escapeHtml(row.councillor)}</strong></div>
       </section>
@@ -354,6 +374,7 @@
   const hotspotLayer = L.layerGroup().addTo(map);
   const gapsLayer = L.layerGroup().addTo(map);
   const priorityLayer = L.layerGroup().addTo(map);
+  const hallLayer = L.layerGroup();
   const interactionLayer = L.layerGroup().addTo(map);
   let heatLayer = null;
 
@@ -534,6 +555,25 @@
     }
   }
 
+  function renderCommunityHalls() {
+    const toggle = document.getElementById("toggle-halls");
+    hallLayer.clearLayers();
+    state.datasets.communityHalls.forEach(hall => {
+      const marker = L.circleMarker([hall.lat, hall.lng], {
+        radius: 7,
+        weight: 2,
+        color: "#e0f2fe",
+        fillColor: "#0891b2",
+        fillOpacity: 0.9,
+        className: "community-hall-marker"
+      }).bindPopup(`<div><strong>${escapeHtml(hall.name)} Community League Hall</strong></div><div>City of Edmonton community-league hall location</div>`)
+        .bindTooltip(`${escapeHtml(hall.name)} hall`, { direction: "top", opacity: 0.95 });
+      hallLayer.addLayer(marker);
+    });
+    if (toggle?.checked) hallLayer.addTo(map);
+    else map.removeLayer(hallLayer);
+  }
+
   function renderKPIs(rows) {
     const permits = rows.reduce((sum, r) => sum + r.permits, 0);
     const yes = rows.filter(r => r.enuPresence === true).length;
@@ -584,6 +624,7 @@
     renderHotspots(rows);
     renderGaps(rows);
     renderPriority(rows);
+    renderCommunityHalls();
     renderKPIs(rows);
     renderTopGrowth(rows);
     setDetails(null);
@@ -595,7 +636,7 @@
   restoreNeighbourhoodFromUrl();
   window.addEventListener("hashchange", restoreNeighbourhoodFromUrl);
 
-  ["toggle-heat", "toggle-hotspots", "toggle-gaps", "toggle-priority"].forEach(id => {
+  ["toggle-heat", "toggle-hotspots", "toggle-gaps", "toggle-priority", "toggle-halls"].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener("change", renderAll);
   });
