@@ -326,6 +326,26 @@
       line-height:1.45;
     }
 
+    .site-credit{
+      padding:2px 12px 14px;
+      color:#7f8ca8;
+      font-size:10px;
+      line-height:1.4;
+      text-align:center;
+    }
+
+    .site-credit a{
+      color:#aebbd3;
+      font-weight:600;
+      text-decoration:none;
+    }
+
+    .site-credit a:hover,
+    .site-credit a:focus-visible{
+      color:#fff;
+      text-decoration:underline;
+    }
+
     .methodology-panel details{
       color:#dbeafe;
     }
