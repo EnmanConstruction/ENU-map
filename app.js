@@ -321,8 +321,7 @@
     `;
 
     box.querySelector(".details-close")?.addEventListener("click", () => {
-      clearNeighbourhoodUrl();
-      setDetails(null);
+      dismissNeighbourhoodDetails();
     });
     box.querySelector(".share-neighbourhood")?.addEventListener("click", async event => {
       const status = box.querySelector(".share-status");
@@ -334,6 +333,12 @@
         if (status) status.textContent = "Copy the URL from your browser to share this neighbourhood.";
       }
     });
+  }
+
+  function dismissNeighbourhoodDetails() {
+    clearNeighbourhoodUrl();
+    setDetails(null);
+    map.closePopup();
   }
 
   function showAreaChoices(resolution) {
@@ -349,7 +354,7 @@
       <p class="official-geography">This familiar area includes several official City neighbourhoods. Choose yours:</p>
       <div class="area-choices">${resolution.rows.map(row => `<button type="button" data-neighbourhood="${escapeHtml(row.name)}">${escapeHtml(row.name)}<small>${escapeHtml(row.ward)} ward</small></button>`).join("")}</div>
     `;
-    box.querySelector(".details-close")?.addEventListener("click", () => setDetails(null));
+    box.querySelector(".details-close")?.addEventListener("click", dismissNeighbourhoodDetails);
     box.querySelectorAll("[data-neighbourhood]").forEach(button => button.addEventListener("click", () => {
       const row = resolution.rows.find(item => item.name === button.dataset.neighbourhood);
       selectNeighbourhood(row);
@@ -434,7 +439,8 @@
         color: "transparent",
         fillColor: "#ffffff",
         fillOpacity: 0.001,
-        className: "neighbourhood-hit-target"
+        className: "neighbourhood-hit-target",
+        bubblingMouseEvents: false
       })
       .bindPopup(popupContent)
       .bindTooltip(escapeHtml(d.name), { direction: "top", offset: [0, -10], opacity: 0.95 })
@@ -645,6 +651,7 @@
     const radius = markerHitRadius();
     interactionLayer.eachLayer(layer => layer.setRadius?.(radius));
   });
+  map.on("click", dismissNeighbourhoodDetails);
 })();
 
 (function () {
