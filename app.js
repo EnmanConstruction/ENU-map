@@ -64,6 +64,40 @@
     dataStatus.textContent = `City-backed snapshot • Updated ${snapshotDateLabel}`;
   }
 
+  // Derived from the OpenStreetMap Anthony Henday Drive carriageways (retrieved
+  // 2026-08-14). Neighbourhood representative points are tested against this ring.
+  const HENDAY_RING = [
+    [53.542462, -113.343003], [53.560687, -113.344645], [53.575718, -113.344414],
+    [53.588291, -113.345248], [53.614454, -113.357027], [53.626126, -113.372865],
+    [53.636057, -113.396398], [53.647132, -113.444238], [53.646710, -113.452785],
+    [53.647166, -113.494418], [53.645183, -113.525475], [53.637746, -113.550310],
+    [53.625986, -113.584974], [53.624251, -113.587265], [53.606025, -113.620855],
+    [53.596108, -113.638467], [53.573753, -113.661898], [53.563969, -113.660521],
+    [53.543989, -113.659436], [53.527029, -113.659529], [53.509542, -113.659070],
+    [53.483535, -113.659668], [53.471443, -113.648009], [53.463347, -113.622530],
+    [53.434929, -113.592263], [53.428420, -113.563218], [53.434627, -113.524831],
+    [53.437230, -113.489512], [53.436929, -113.456267], [53.435777, -113.423326],
+    [53.435878, -113.379764], [53.446477, -113.350649], [53.470511, -113.343700],
+    [53.492688, -113.343833], [53.519153, -113.343782], [53.528154, -113.344592]
+  ];
+
+  function pointInPolygon(lat, lng, polygon) {
+    let inside = false;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      const [latI, lngI] = polygon[i];
+      const [latJ, lngJ] = polygon[j];
+      const crosses = ((latI > lat) !== (latJ > lat)) &&
+        (lng < ((lngJ - lngI) * (lat - latI)) / (latJ - latI) + lngI);
+      if (crosses) inside = !inside;
+    }
+    return inside;
+  }
+
+  function hendayZone(row) {
+    if (/^Anthony Henday(?:\s|$)/i.test(row.name)) return "corridor";
+    return pointInPolygon(row.lat, row.lng, HENDAY_RING) ? "inside" : "outside";
+  }
+
   if (!window.ENUData || typeof window.ENUData.loadPublicData !== "function") {
     showMapError("The map data tools could not load. Please refresh the page.");
     return;
@@ -74,10 +108,12 @@
   const cityMetadataByName = new Map(FALLBACK_PUBLIC_DATA.map(row => [row.name.toLocaleUpperCase("en-CA"), row]));
   const publicRows = publicDataResult.rows.map(row => {
     const cityRow = cityMetadataByName.get(row.name.toLocaleUpperCase("en-CA"));
-    return { ...row, communityLeague: row.communityLeague || cityRow?.communityLeague || "" };
+    const merged = { ...row, communityLeague: row.communityLeague || cityRow?.communityLeague || "" };
+    return { ...merged, hendayZone: hendayZone(merged) };
   });
 
   const state = {
+    mode: "infill",
     filters: { ward: null },
     datasets: {
       publicMap: publicRows,
@@ -107,9 +143,23 @@
   }
 
   function getFilteredPublicRows() {
-    const rows = state.datasets.publicMap;
+    const rows = state.mode === "infill"
+      ? state.datasets.publicMap.filter(row => row.hendayZone === "inside")
+      : state.datasets.publicMap;
     if (!state.filters.ward) return rows;
     return rows.filter(d => d.ward === state.filters.ward);
+  }
+
+  function getPriorityComparisonRows() {
+    return state.mode === "infill"
+      ? state.datasets.publicMap.filter(row => row.hendayZone === "inside")
+      : state.datasets.publicMap;
+  }
+
+  function percentile(rows, field, percentileValue = 0.9) {
+    const values = rows.map(row => row[field]).filter(Number.isFinite).sort((a, b) => a - b);
+    if (!values.length) return 1;
+    return Math.max(1, values[Math.floor((values.length - 1) * percentileValue)]);
   }
 
   function selectionFromUrl() {
@@ -133,10 +183,10 @@
     history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
   }
 
-  function calculatePriorityScore(row) {
+  function calculatePriorityScore(row, comparisonRows = getPriorityComparisonRows()) {
     if (row.enuPresence === null) return null;
-    const permitScore = Math.min(row.permits / 25, 10);
-    const housingGrowthScore = Math.min(Math.log1p(row.infill) / Math.log1p(250) * 10, 10);
+    const permitScore = Math.min(row.permits / percentile(comparisonRows, "permits") * 10, 10);
+    const housingGrowthScore = Math.min(Math.log1p(row.infill) / Math.log1p(percentile(comparisonRows, "infill")) * 10, 10);
     const noPresenceBonus = row.enuPresence === false ? 3 : 0;
     const baselineAdvocacyNeed = 1.5;
 
@@ -230,6 +280,31 @@
       }
     });
     bar.appendChild(searchForm);
+
+    const focusSwitch = document.createElement("div");
+    focusSwitch.className = "focus-switch";
+    focusSwitch.setAttribute("role", "group");
+    focusSwitch.setAttribute("aria-label", "Map growth focus");
+    focusSwitch.innerHTML = `
+      <button type="button" data-mode="infill" class="active" aria-pressed="true">Infill Focus</button>
+      <button type="button" data-mode="citywide" aria-pressed="false">Citywide Growth</button>
+    `;
+    focusSwitch.querySelectorAll("button").forEach(button => button.addEventListener("click", () => {
+      if (button.dataset.mode === state.mode) return;
+      state.mode = button.dataset.mode;
+      state.filters.ward = null;
+      const wardSelect = document.getElementById("wardFilter");
+      if (wardSelect) wardSelect.value = "";
+      focusSwitch.querySelectorAll("button").forEach(item => {
+        const active = item.dataset.mode === state.mode;
+        item.classList.toggle("active", active);
+        item.setAttribute("aria-pressed", String(active));
+      });
+      renderAll();
+      if (state.mode === "infill") map.fitBounds(L.latLngBounds(HENDAY_RING), { padding: [18, 18] });
+      else map.setView([53.5444, -113.4909], 10);
+    }));
+    bar.appendChild(focusSwitch);
 
     const wardGroup = document.createElement("div");
     wardGroup.className = "ward-filter";
@@ -381,7 +456,17 @@
   const priorityLayer = L.layerGroup().addTo(map);
   const hallLayer = L.layerGroup();
   const interactionLayer = L.layerGroup().addTo(map);
+  const hendayLayer = L.layerGroup().addTo(map);
   let heatLayer = null;
+
+  L.polygon(HENDAY_RING, {
+    color: "#7dd3fc",
+    weight: 2,
+    opacity: 0.8,
+    fill: false,
+    dashArray: "7,7",
+    interactive: false
+  }).bindTooltip("Anthony Henday Drive infill focus boundary", { sticky: true }).addTo(hendayLayer);
 
   function markerHitRadius() {
     const coarsePointer = window.matchMedia?.("(pointer: coarse)").matches;
@@ -601,6 +686,20 @@
     document.getElementById("k-priority-low").textContent = priorityCounts.Low.toLocaleString();
   }
 
+  function renderModeCopy() {
+    const infillMode = state.mode === "infill";
+    const snapshotHeading = document.getElementById("snapshotHeading");
+    const growthHeading = document.getElementById("growthHeading");
+    const growthIntro = document.getElementById("growthIntro");
+    if (snapshotHeading) snapshotHeading.textContent = infillMode ? "Infill Snapshot" : "Citywide Snapshot";
+    if (growthHeading) growthHeading.textContent = infillMode ? "Top Infill Growth Areas" : "Top Citywide Growth Areas";
+    if (growthIntro) growthIntro.textContent = infillMode
+      ? "Inside-Henday neighbourhoods with the most new-home permits in the trailing 24 months."
+      : "Neighbourhoods citywide with the most new-home permits in the trailing 24 months.";
+    if (infillMode) hendayLayer.addTo(map);
+    else map.removeLayer(hendayLayer);
+  }
+
   function renderTopGrowth(rows) {
     const list = document.getElementById("topGrowthList");
     if (!list) return;
@@ -631,6 +730,7 @@
     renderGaps(rows);
     renderPriority(rows);
     renderCommunityHalls();
+    renderModeCopy();
     renderKPIs(rows);
     renderTopGrowth(rows);
     setDetails(null);

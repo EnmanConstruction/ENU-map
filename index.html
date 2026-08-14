@@ -24,7 +24,7 @@
 
  <aside id="sidepanel">
   <div class="panel">
-    <h2>Neighbourhood Snapshot</h2>
+    <h2 id="snapshotHeading">Infill Snapshot</h2>
     <div class="kpi">
       <div class="k"><div class="n" id="k-permits">–</div><div class="l">Dev. permits</div></div>
       <div class="k blue"><div class="n" id="k-enu-yes">–</div><div class="l">ENU Presence* (Yes)</div></div>
@@ -38,8 +38,8 @@
   </div>
 
   <div class="panel growth-panel">
-    <h2>Top Growth Areas</h2>
-    <p class="panel-intro">Neighbourhoods with the most new-home permits in the trailing 24 months.</p>
+    <h2 id="growthHeading">Top Infill Growth Areas</h2>
+    <p id="growthIntro" class="panel-intro">Inside-Henday neighbourhoods with the most new-home permits in the trailing 24 months.</p>
     <ol id="topGrowthList" class="growth-list"></ol>
   </div>
 
@@ -56,6 +56,7 @@
     <h2>Legend</h2>
     <div class="legend">
       <h3>Development activity</h3>
+      <div class="legend-item"><span class="henday-line" aria-hidden="true"></span><span>Henday infill focus boundary</span></div>
       <div class="legend-item"><span class="heat-gradient" aria-hidden="true"></span><span>Active development intensity</span></div>
       <div class="legend-item"><span class="dot housing medium" aria-hidden="true"></span><span>Moderate housing growth</span></div>
       <div class="legend-item"><span class="dot housing high" aria-hidden="true"></span><span>High housing growth</span></div>
@@ -82,6 +83,7 @@
       <div class="methodology-copy">
         <p><strong>Active development</strong> counts City development-permit records currently marked In Progress.</p>
         <p><strong>Housing growth</strong> counts new-building permits adding at least one home during the trailing 24 months.</p>
+        <p><strong>Infill Focus</strong> includes neighbourhoods whose City representative point falls inside Anthony Henday Drive. Henday corridor neighbourhoods are excluded from infill rankings. Switch to Citywide Growth to see every neighbourhood.</p>
         <p><strong>ENU presence</strong> is maintained by ENU. Unknown means the neighbourhood has not yet been confirmed—not that ENU is absent.</p>
         <p><strong>Community leagues</strong> use City neighbourhood service geography where the relationship is clear. Hall locations come from the City’s Community League Halls dataset; unresolved neighbourhoods link to EFCL’s league finder.</p>
         <p id="snapshotNote" class="source-note">City permit snapshot date is loading. The status badge above shows whether the map is using its verified snapshot or a connected live sheet.</p>
@@ -108,6 +110,6 @@
   <script src="data.js"></script>
   <script src="data-loader.js"></script>
   <script src="identity-data.js"></script>
-  <script src="app.js?v=20260812-map-dismiss"></script>
+  <script src="app.js?v=20260814-infill-focus"></script>
 </body>
 </html>
