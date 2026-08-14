@@ -322,7 +322,7 @@
 
     .kpi{
       display:grid;
-      grid-template-columns:repeat(3,1fr);
+      grid-template-columns:repeat(2,minmax(0,1fr));
       gap:8px;
       margin-top:10px;
     }
@@ -338,6 +338,17 @@
     .k .n{
       font-weight:700;
       font-size:16px;
+    }
+
+    .k .l{
+      margin-top:2px;
+      font-size:11px;
+      line-height:1.25;
+      overflow-wrap:anywhere;
+    }
+
+    .k:last-child{
+      grid-column:1/-1;
     }
 
     .k.blue{color:var(--oilers-blue)}
@@ -688,10 +699,6 @@
 
       #map{
         min-height:500px;
-      }
-
-      .kpi{
-        grid-template-columns:repeat(2,1fr);
       }
 
       .details{
