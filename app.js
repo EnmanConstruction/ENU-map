@@ -340,7 +340,7 @@
     const priority = getPriorityLevel(score);
     const presenceLabel = row.enuPresence === true ? "Yes" : row.enuPresence === false ? "No" : "Unknown";
     const presenceClass = row.enuPresence === true ? "yes" : row.enuPresence === false ? "no" : "unknown";
-    const priorityBadge = score === null ? "" : `<span class="badge priority-${priority.toLowerCase()}">Priority: ${priority}</span>`;
+    const priorityBadge = score === null ? "" : `<span class="badge priority-${priority.toLowerCase()}">ENU opportunity: ${priority}</span>`;
     const displayName = identityName || row.name;
     const growth = growthProfile(row);
     const coverageCopy = row.enuPresence === true
@@ -369,7 +369,7 @@
         <div class="profile-section-heading"><span>ENU in this neighbourhood</span><span class="badge ${presenceClass}">${presenceLabel}</span></div>
         <p>${coverageCopy}</p>
         ${row.leader ? `<div class="profile-contact"><span>Local leader</span><strong>${escapeHtml(row.leader)}</strong></div>` : `<p class="awaiting-contact">Local leader information is awaiting ENU confirmation.</p>`}
-        ${priorityBadge ? `<div class="priority-line">${priorityBadge}<span>Advocacy score ${score}</span></div>` : ""}
+        ${priorityBadge ? `<div class="priority-line">${priorityBadge}<span>ENU planning score ${score}</span></div>` : ""}
       </section>
 
       <section class="profile-section civic-summary">
@@ -632,8 +632,9 @@
         fillOpacity: 0.15
       }).bindPopup(`
         <div><strong>${escapeHtml(d.name)}</strong></div>
-        <div><strong>Priority:</strong> ${level}</div>
-        <div><strong>Priority score:</strong> ${score}</div>
+        <div><strong>ENU advocacy opportunity:</strong> ${level}</div>
+        <div><strong>ENU planning score:</strong> ${score}</div>
+        <div><small>ENU planning indicator—not a City designation.</small></div>
       `);
 
       priorityLayer.addLayer(priorityMarker);
