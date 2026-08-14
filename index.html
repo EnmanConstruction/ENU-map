@@ -14,7 +14,7 @@
     <header>
       <div>
         <h1>Edmonton Neighbourhoods United — Growth & Advocacy Map</h1>
-        <div class="meta">407 neighbourhoods • Housing growth • ENU coverage • Action priorities</div>
+        <div class="meta">407 neighbourhoods • Housing growth • ENU coverage • Advocacy opportunities</div>
         <div id="dataStatus" class="demo-badge" role="status">Loading map data…</div>
       </div>
       <button id="panelToggle" class="hamburger" aria-expanded="false" aria-controls="sidepanel">☰</button>
@@ -30,9 +30,9 @@
       <div class="k blue"><div class="n" id="k-enu-yes">–</div><div class="l">ENU Presence* (Yes)</div></div>
       <div class="k red"><div class="n" id="k-enu-no">–</div><div class="l">ENU Presence* (No)</div></div>
       <div class="k unknown"><div class="n" id="k-enu-unknown">–</div><div class="l">ENU Status Unknown</div></div>
-      <div class="k high"><div class="n" id="k-priority-high">–</div><div class="l">High Priority</div></div>
-      <div class="k medium"><div class="n" id="k-priority-medium">–</div><div class="l">Medium Priority</div></div>
-      <div class="k low"><div class="n" id="k-priority-low">–</div><div class="l">Low Priority</div></div>
+      <div class="k high"><div class="n" id="k-priority-high">–</div><div class="l">High ENU Advocacy Opportunity</div></div>
+      <div class="k medium"><div class="n" id="k-priority-medium">–</div><div class="l">Medium ENU Advocacy Opportunity</div></div>
+      <div class="k low"><div class="n" id="k-priority-low">–</div><div class="l">Low ENU Advocacy Opportunity</div></div>
     </div>
     <p class="provisional-note">* ENU presence is provisional while neighbourhood records are being confirmed.</p>
   </div>
@@ -48,7 +48,7 @@
     <label class="toggle"><input id="toggle-heat" type="checkbox" checked /> Active development heatmap</label>
     <label class="toggle"><input id="toggle-hotspots" type="checkbox" checked /> Housing-growth hotspots (24 mo.)</label>
     <label class="toggle"><input id="toggle-gaps" type="checkbox" checked /> Areas needing local advocates</label>
-    <label class="toggle"><input id="toggle-priority" type="checkbox" checked /> Strategic priority layer</label>
+    <label class="toggle"><input id="toggle-priority" type="checkbox" checked /> ENU advocacy opportunity layer</label>
     <label class="toggle"><input id="toggle-halls" type="checkbox" /> Community league halls</label>
   </div>
 
@@ -69,9 +69,9 @@
 
       <h3>Advocacy overlays</h3>
       <div class="legend-item"><span class="ring advocates" aria-hidden="true"></span><span>Needs local advocates</span></div>
-      <div class="legend-item"><span class="ring priority-high" aria-hidden="true"></span><span>Strategic priority: High</span></div>
-      <div class="legend-item"><span class="ring priority-medium" aria-hidden="true"></span><span>Strategic priority: Medium</span></div>
-      <div class="legend-item"><span class="ring priority-low" aria-hidden="true"></span><span>Strategic priority: Low</span></div>
+      <div class="legend-item"><span class="ring priority-high" aria-hidden="true"></span><span>ENU advocacy opportunity: High</span></div>
+      <div class="legend-item"><span class="ring priority-medium" aria-hidden="true"></span><span>ENU advocacy opportunity: Medium</span></div>
+      <div class="legend-item"><span class="ring priority-low" aria-hidden="true"></span><span>ENU advocacy opportunity: Low</span></div>
       <h3>Community landmarks</h3>
       <div class="legend-item"><span class="hall-symbol" aria-hidden="true"></span><span>Community league hall</span></div>
     </div>
@@ -84,6 +84,7 @@
         <p><strong>Active development</strong> counts City development-permit records currently marked In Progress.</p>
         <p><strong>Housing growth</strong> counts new-building permits adding at least one home during the trailing 24 months.</p>
         <p><strong>Infill Focus</strong> includes neighbourhoods whose City representative point falls inside Anthony Henday Drive. Henday corridor neighbourhoods are excluded from infill rankings. Switch to Citywide Growth to see every neighbourhood.</p>
+        <p><strong>ENU advocacy opportunity</strong> is an ENU planning indicator based on development activity, housing growth, and confirmed ENU presence. It is not a City of Edmonton priority or designation.</p>
         <p><strong>ENU presence</strong> is maintained by ENU. Unknown means the neighbourhood has not yet been confirmed—not that ENU is absent.</p>
         <p><strong>Community leagues</strong> use City neighbourhood service geography where the relationship is clear. Hall locations come from the City’s Community League Halls dataset; unresolved neighbourhoods link to EFCL’s league finder.</p>
         <p id="snapshotNote" class="source-note">City permit snapshot date is loading. The status badge above shows whether the map is using its verified snapshot or a connected live sheet.</p>
@@ -110,6 +111,6 @@
   <script src="data.js"></script>
   <script src="data-loader.js"></script>
   <script src="identity-data.js"></script>
-  <script src="app.js?v=20260814-infill-focus"></script>
+  <script src="app.js?v=20260814-enu-opportunity"></script>
 </body>
 </html>
