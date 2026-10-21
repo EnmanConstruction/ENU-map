@@ -94,7 +94,7 @@
 
   <footer class="site-credit">
     Strategy, design &amp; development by
-    <a href="https://www.sfmarketing.ca" target="_blank" rel="noopener noreferrer">SF Marketing</a>
+    <a href="https://www.sfmarketing.ca" target="_blank" rel="noopener noreferrer" data-analytics-action="sf-marketing">SF Marketing</a>
   </footer>
 </aside>
 
@@ -107,6 +107,10 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 
+  <script>
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+  </script>
+  <script defer src="/_vercel/insights/script.js"></script>
   <script src="config.js"></script>
   <script src="data.js"></script>
   <script src="data-loader.js"></script>

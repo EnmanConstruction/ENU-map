@@ -13,9 +13,10 @@ Static micro‑app for Edmonton Neighbourhoods United.
 - City-backed community-league relationships and optional hall locations
 - Densification heatmap + infill hotspots (context)
 - KPIs aligned to the colors
+- Privacy-conscious interaction analytics for searches, neighbourhood views, filters, sharing, and ENU actions
 
 ## Local preview
-Run `npm run build`, then serve the generated `dist/` directory with a local web server.
+Run `npm run build`, then serve the generated `dist/` directory with a local web server. The build gives local assets a deployment-specific version so returning visitors receive the newest weekly City snapshot instead of an older browser-cached copy.
 
 ## Automatic City data refresh
 The `Refresh City map data` GitHub Actions workflow runs every Sunday and can also be started manually. It downloads the current City datasets, validates the result, updates `data.js` only when values changed, and pushes the verified snapshot to `main` for automatic Vercel deployment. A failed download or validation never replaces the production snapshot.
@@ -26,11 +27,17 @@ The `Refresh City map data` GitHub Actions workflow runs every Sunday and can al
 - `config.js` — public data-source configuration
 - `data.js` — generated public City snapshot plus provisional ENU status; never store confidential information here
 - `scripts/build-city-data.mjs` — repeatable City open-data snapshot generator (`npm run data:refresh`)
+- `scripts/build-site.mjs` — static build and automatic cache-busting for each deployment
 - `data-loader.js` — CSV parsing, validation, live loading, and fallback handling
 - `app.js` — map rendering, filters, scoring, KPIs, and mobile interactions
 - `neighbourhoods-template.csv` — import-ready Google Sheets structure
 - `DATA_GUIDE.md` — public-sheet setup and privacy rules
 - `dist/` — generated deployment output (not committed)
+
+## Usage insights
+The site includes Vercel Web Analytics and a small set of custom events for the actions ENU needs to understand: successful or unsuccessful searches, neighbourhood profiles opened, map focus and ward changes, layer toggles, copied profile links, and outbound ENU/community/SF Marketing links. Events use only public map labels and interaction types; typed search text, email addresses, and other personal information are never sent.
+
+Enable Web Analytics once for the Vercel project before reviewing these events in the Vercel dashboard.
 
 ## Deploy to Vercel
 1. Create a new project at https://vercel.com/new

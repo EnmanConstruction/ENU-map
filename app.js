@@ -3,6 +3,11 @@
   const dataStatus = document.getElementById("dataStatus");
   const snapshotNote = document.getElementById("snapshotNote");
 
+  function trackEvent(name, data = {}) {
+    if (typeof window.va !== "function") return;
+    window.va("event", { name, data });
+  }
+
   const snapshotDate = typeof ENU_DATA_SNAPSHOT !== "undefined" && ENU_DATA_SNAPSHOT.asOf
     ? new Date(`${ENU_DATA_SNAPSHOT.asOf}T12:00:00`)
     : null;
@@ -268,13 +273,18 @@
       const input = searchForm.querySelector("#neighbourhoodSearch");
       const resolution = window.ENUIdentity?.resolve(input.value, state.datasets.publicMap);
       if (!resolution) {
+        trackEvent("Neighbourhood Search", { result: "not-found" });
         input.setCustomValidity("Choose a neighbourhood or community from the list.");
         input.reportValidity();
         return;
       }
       input.setCustomValidity("");
+      trackEvent("Neighbourhood Search", {
+        result: resolution.rows.length === 1 ? "single" : "multiple",
+        matchType: resolution.type || "unknown"
+      });
       if (resolution.rows.length === 1) {
-        selectNeighbourhood(resolution.rows[0], { identityName: resolution.type === "alias" ? resolution.name : null });
+        selectNeighbourhood(resolution.rows[0], { identityName: resolution.type === "alias" ? resolution.name : null, source: "search" });
       } else {
         showAreaChoices(resolution);
       }
@@ -292,6 +302,7 @@
     focusSwitch.querySelectorAll("button").forEach(button => button.addEventListener("click", () => {
       if (button.dataset.mode === state.mode) return;
       state.mode = button.dataset.mode;
+      trackEvent("Map Focus Changed", { mode: state.mode });
       state.filters.ward = null;
       const wardSelect = document.getElementById("wardFilter");
       if (wardSelect) wardSelect.value = "";
@@ -319,6 +330,7 @@
     wardSelect.addEventListener("change", () => {
       clearNeighbourhoodUrl();
       state.filters.ward = wardSelect.value || null;
+      trackEvent("Ward Filter Changed", { ward: state.filters.ward || "all" });
       renderAll();
       if (state.filters.ward) fitToWard(state.filters.ward);
       else map.setView([53.5444, -113.4909], 11);
@@ -402,6 +414,7 @@
       const status = box.querySelector(".share-status");
       try {
         await navigator.clipboard.writeText(neighbourhoodUrl(row, identityName));
+        trackEvent("Profile Link Copied", { neighbourhood: row.name });
         event.currentTarget.textContent = "Link copied";
         if (status) status.textContent = "Ready to share.";
       } catch (error) {
@@ -432,7 +445,7 @@
     box.querySelector(".details-close")?.addEventListener("click", dismissNeighbourhoodDetails);
     box.querySelectorAll("[data-neighbourhood]").forEach(button => button.addEventListener("click", () => {
       const row = resolution.rows.find(item => item.name === button.dataset.neighbourhood);
-      selectNeighbourhood(row);
+      selectNeighbourhood(row, { source: "area-choice" });
     }));
   }
 
@@ -474,8 +487,9 @@
     return coarsePointer ? 16 : 12;
   }
 
-  function selectNeighbourhood(row, { updateUrl = true, identityName = null } = {}) {
+  function selectNeighbourhood(row, { updateUrl = true, identityName = null, source = "map" } = {}) {
     if (!row) return;
+    trackEvent("Neighbourhood Viewed", { neighbourhood: row.name, mode: state.mode, source });
     const hadWardFilter = Boolean(state.filters.ward);
     state.filters.ward = null;
     if (hadWardFilter) renderAll();
@@ -491,7 +505,7 @@
 
   function restoreNeighbourhoodFromUrl() {
     const selection = selectionFromUrl();
-    if (selection) selectNeighbourhood(selection.row, { updateUrl: false, identityName: selection.identityName });
+    if (selection) selectNeighbourhood(selection.row, { updateUrl: false, identityName: selection.identityName, source: "shared-link" });
   }
 
   function renderPresence(rows) {
@@ -717,7 +731,7 @@
           <span class="growth-name">${escapeHtml(row.name)}<small>${escapeHtml(row.ward)}</small></span>
           <strong>${row.infill.toLocaleString()}<small>permits</small></strong>
         `;
-        button.addEventListener("click", () => selectNeighbourhood(row));
+        button.addEventListener("click", () => selectNeighbourhood(row, { source: "top-growth" }));
         item.appendChild(button);
         list.appendChild(item);
       });
@@ -745,7 +759,19 @@
 
   ["toggle-heat", "toggle-hotspots", "toggle-gaps", "toggle-priority", "toggle-halls"].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.addEventListener("change", renderAll);
+    if (el) el.addEventListener("change", () => {
+      trackEvent("Map Layer Toggled", { layer: id.replace("toggle-", ""), enabled: el.checked });
+      renderAll();
+    });
+  });
+
+  document.addEventListener("click", event => {
+    const link = event.target.closest("a");
+    if (!link) return;
+    let destination = link.dataset.analyticsAction;
+    if (!destination && link.classList.contains("profile-action")) destination = "enu";
+    if (!destination && link.classList.contains("league-link")) destination = "community-league";
+    if (destination) trackEvent("Outbound Action Clicked", { destination });
   });
 
   map.on("zoomend", () => {
